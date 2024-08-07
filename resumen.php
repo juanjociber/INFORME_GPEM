@@ -7,13 +7,14 @@
   $isAuthorized = false;
   $errorMessage = ''; 
   $datos = array();
+  $Estado=0;
 
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if (is_numeric($Id) && $Id > 0) {
       $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
-      if ($informe) {
+      if ($informe && $informe->estado !=3) {
         $isAuthorized = true;
         $datos = FnBuscarActividades($conmy, $Id);
         $conclusiones=array();
@@ -29,9 +30,7 @@
             $antecedentes[]=array('actividad'=>$dato['actividad'],'id'=>$dato['id'],'tipo'=>$dato['tipo']);
           }	
         }
-      } else {
-        throw new Exception('Informe no encontrado.');
-      }
+      } 
     } else {
       throw new Exception('El ID es inválido.');
     }	
@@ -65,11 +64,11 @@
     <div class="container">
       <div class="row border-bottom mb-3 fs-5">
         <div class="col-12 fw-bold d-flex justify-content-between">
-          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? ($informe->clinombre) : 'No Autorizado'; ?></p>
+          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? ($informe->clinombre) : $Estado=3 ? ($informe->clinombre) : 'No Autorizado'; ?></p>
           <input type="text" class="d-none" id="txtIdInforme" value="<?php echo $informe->id; ?>" readonly/>
           <input type="text" class="d-none" id="txtIdtblDetalleInf" readonly/>
           <input type="text" class="d-none" id="txtInfid" readonly/>
-          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? ($informe->nombre) : 'No Autorizado'; ?></p>
+          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? ($informe->nombre) : $Estado=3 ? ($informe->nombre) : 'No Autorizado'; ?></p>
         </div>
       </div>
       <div class="row">
@@ -162,10 +161,10 @@
               </div>
               <div class="modal-body">
                 <form id="formGeneral">
-                  <textarea type="text" class="form-control" id="modalActividadInput" name="actividad" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="diagnosticoModalInput" name="diagnostico" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="trabajoModalInput" name="trabajos" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="observacionModalInput" name="observaciones" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase" id="modalActividadInput" name="actividad" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="diagnosticoModalInput" name="diagnostico" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="trabajoModalInput" name="trabajos" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="observacionModalInput" name="observaciones" rows="3" placeholder=""></textarea>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-primary text-uppercase fw-light" id="modalGuardarBtn" onclick="fnModificarActividadInforme()"><i class="bi bi-floppy"></i> Guardar</button>
                   </div>
@@ -185,10 +184,10 @@
               </div>
               <div class="modal-body">
                 <form id="formGeneral">
-                  <textarea type="text" class="form-control" id="registroActividadInput" name="actividad" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="registroDiagnosticoInput" name="diagnostico" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="registroTrabajoInput" name="trabajos" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="registroObservacionInput" name="observaciones" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase" id="registroActividadInput" name="actividad" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="registroDiagnosticoInput" name="diagnostico" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="registroTrabajoInput" name="trabajos" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="registroObservacionInput" name="observaciones" rows="3" placeholder=""></textarea>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-primary text-uppercase fw-light" id="modalGuardarBtn" onclick="fnRegistrarActividadDetalle()"><i class="bi bi-floppy"></i> Guardar</button>
                   </div>
@@ -208,10 +207,10 @@
               </div>
               <div class="modal-body">
                 <form id="formGeneral">
-                  <textarea type="text" class="form-control" id="actividadModalInput" name="actividad" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="diagnosticoModalInput" name="diagnostico" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="trabajoModalInput" name="trabajos" rows="3" placeholder=""></textarea>
-                  <textarea type="text" class="form-control d-none" id="observacionModalInput" name="observaciones" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase" id="actividadModalInput" name="actividad" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="diagnosticoModalInput" name="diagnostico" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="trabajoModalInput" name="trabajos" rows="3" placeholder=""></textarea>
+                  <textarea type="text" class="form-control text-secondary text-uppercase d-none" id="observacionModalInput" name="observaciones" rows="3" placeholder=""></textarea>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-primary text-uppercase fw-light" id="modalGuardarBtn" onclick="FnModificarActividad()"><i class="bi bi-floppy"></i> Guardar</button>
                   </div>

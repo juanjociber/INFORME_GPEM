@@ -7,12 +7,14 @@
   $isAuthorized = false;
   $errorMessage = '';
 
+  $Estado=0;
+
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if (is_numeric($Id) && $Id > 0) {
       $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
-      if($informe){
+      if($informe && $informe->estado !=3){
         $isAuthorized = true;
         $supervisores = FnBuscarSupervisores($conmy,$Cliid);
       }
@@ -50,14 +52,17 @@
     <link rel="stylesheet" href="/mycloud/library/bootstrap-5.1.0-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/mycloud/library/select-gpem-1.0/css/select-gpem-1.0.css">
   </head>
+  <style>
+    .custom-select-arrow { top: 20%; right: 10px; }
+  </style>
   <body>
     <div class="container">
       <!-- CABECERA -->
       <div class="row border-bottom mb-3 fs-5">
         <div class="col-12 fw-bold d-flex justify-content-between">
-          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe->clinombre : 'No Autorizado'; ?></p>
-          <input type="text" class="d-none" id="idInforme" value="<?php echo $isAuthorized ? $informe->id : ''; ?>" readonly/>
-          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $informe->nombre : 'No Autorizado'; ?></p>
+          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe->clinombre : $Estado=3 ? $informe->clinombre : 'No Autorizado'; ?></p>
+          <input type="text" class="d-none" id="idInforme" value="<?php echo $isAuthorized ? $informe->id : $Estado=3 ? $informe->id : ''; ?>" readonly/>
+          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $informe->nombre : $Estado=3 ? $informe->nombre : 'No Autorizado'; ?></p>
         </div>
       </div>
       <!-- ENLACES -->
@@ -134,6 +139,7 @@
             </div>
           </div>
         </div>
+
         <!-- BOTON GUARDAR -->
         <div class="row mt-4">
           <div class="col-6 col-md-3 col-lg-2 mt-2">

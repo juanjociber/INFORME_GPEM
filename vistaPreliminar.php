@@ -2,7 +2,8 @@
   require_once $_SERVER['DOCUMENT_ROOT']."/gesman/connection/ConnGesmanDb.php";
   require_once 'Datos/InformesData.php';
 
-  $Id = isset($_GET['id']) ? $_GET['id'] : '';
+  // $Id = isset($_GET['id']) ? $_GET['id'] : '';
+  $Id = $_GET['id'];
   $Cliid = 2;
   $isAuthorized = false;
   $errorMessage = ''; 
@@ -32,7 +33,6 @@
 		$contador=1;		
 
 		foreach ($arbol as $key=>$nodo) {
-      //ASIGNANDO VALOR A NODOGLOBAL
 			$indiceActual = $nivel==0?$contador++:$indice.'.'.($key+1);
 			$html.='
             <div class="col-12 mb-0 border-bottom bg-light">
@@ -110,63 +110,93 @@
     
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    if (!empty($_GET['id'])) {
-      
-        $informe  = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
-        $archivos = FnBuscarArchivos($conmy, $Id);
-        $datos = FnBuscarActividades($conmy, $Id);
-        $actividades=array();
-        $conclusiones=array();
-        $recomendaciones=array();
-        $antecedentes=array();
     
-        foreach($datos as $dato){
-          if($dato['tipo']=='act'){
-            $actividades[]=array(
-              'id'=>$dato['id'],
-              'ownid'=>$dato['ownid'],
-              'tipo'=>$dato['tipo'],
-              'actividad'=>$dato['actividad'],
-              'diagnostico'=>$dato['diagnostico'],
-              'trabajos'=>$dato['trabajos'],
-              'observaciones'=>$dato['observaciones'],
+    $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
+    if (!empty($informe) && $informe->estado != 3) {
+      $isAuthorized = true;
+      $archivos = FnBuscarArchivos($conmy, $Id);
+      $datos = FnBuscarActividades($conmy, $Id);
+      if (!empty($datos)) {
+        $actividades = array();
+        $conclusiones = array();
+        $recomendaciones = array();
+        $antecedentes = array();
+        
+        foreach ($datos as $dato) {
+          if ($dato['tipo'] == 'act') {
+            $actividades[] = array(
+              'id' => $dato['id'],
+              'ownid' => $dato['ownid'],
+              'tipo' => $dato['tipo'],
+              'actividad' => $dato['actividad'],
+              'diagnostico' => $dato['diagnostico'],
+              'trabajos' => $dato['trabajos'],
+              'observaciones' => $dato['observaciones'],
             );
-          }else if($dato['tipo']=='con'){
-            $conclusiones[]=array('actividad'=>$dato['actividad']);
-          }else if($dato['tipo']=='rec'){
-            $recomendaciones[]=array('actividad'=>$dato['actividad']);
-          }else if($dato['tipo']=='ant'){
-            $antecedentes[]=array('actividad'=>$dato['actividad']);
-          }	
+          } else if ($dato['tipo'] == 'con') {
+            $conclusiones[] = array('actividad' => $dato['actividad']);
+          } else if ($dato['tipo'] == 'rec') {
+            $recomendaciones[] = array('actividad' => $dato['actividad']);
+          } else if ($dato['tipo'] == 'ant') {
+            $antecedentes[] = array('actividad' => $dato['actividad']);
+          }    
+        }
+
+        $imagenInformes = array();
+        $imagenAnexos = array();
+        foreach ($archivos as $archivo) {
+          if ($archivo['tabla'] == "INF") {
+            $imagenInformes[] = array(
+              'titulo' => $archivo['titulo'],
+              'nombre' => $archivo['nombre'],
+              'descripcion' => $archivo['descripcion'],
+            ); 
+          } else if ($archivo['tabla'] == "INFA") {
+            $imagenAnexos[] = array(
+              'titulo' => $archivo['titulo'],
+              'nombre' => $archivo['nombre'],
+              'descripcion' => $archivo['descripcion'],
+            );
+          }
         }
         $arbol = construirArbol($actividades);
         $ids = array_map(function($elemento) {
           return $elemento['id'];
         }, $actividades);
-    
-        $cadenaIds = implode(',', $ids);
-        $imagenes=array();
-        $stmt3 = $conmy->prepare("select id, refid, nombre, descripcion, titulo from tblarchivos where refid IN(".$cadenaIds.") and tabla=:Tabla and tipo=:Tipo;");				
-        $stmt3->execute(array(':Tabla'=>'INFD', ':Tipo'=>'IMG'));
-        while($row3=$stmt3->fetch(PDO::FETCH_ASSOC)){
-          $imagenes[$row3['refid']][]=array(
-            'id'=>(int)$row3['id'],
-            'nombre'=>$row3['nombre'],
-            'descripcion'=>$row3['descripcion'],
-            'titulo'=>$row3['titulo'],
-          );
+        
+        if (count($ids) > 0) {
+          $placeholders = implode(',', array_fill(0, count($ids), '?'));
+          $imagenes = array();
+
+          $stmt3 = $conmy->prepare("SELECT id, refid, nombre, descripcion, titulo FROM tblarchivos WHERE refid IN ($placeholders) AND tabla = ? AND tipo = ?");
+          $params = array_merge($ids, ['INFD', 'IMG']);
+          $stmt3->execute($params);
+
+          while ($row3 = $stmt3->fetch(PDO::FETCH_ASSOC)) {
+            $imagenes[$row3['refid']][] = array(
+              'id' => (int)$row3['id'],
+              'nombre' => $row3['nombre'],
+              'descripcion' => $row3['descripcion'],
+              'titulo' => $row3['titulo'],
+            );
+          }
         }
+      }
     }
-   
-  } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
+  } catch (PDOException $ex) {
+      $errorMessage = $ex->getMessage();
   } catch (Exception $e) {
-      throw new Exception($e->getMessage());
+      $errorMessage = $e->getMessage();
   } finally {
       $conmy = null;
   }
 
+  $claseHabilitado = "btn-outline-secondary";
+  $atributoHabilitado = " disabled";
+  if($Estado == 1 || $Estado == 2 || $Estado == 4){
+      $claseHabilitado = "btn-outline-primary";
+      $atributoHabilitado = "";
+  }
 ?>
 <!doctype html>
 <html lang="es">
@@ -182,37 +212,30 @@
     <link rel="stylesheet" href="/mycloud/library/select-gpem-1.0/css/select-gpem-1.0.css">
   </head>
   <style>
-    .hijos p:first-child{
-      padding-top: 10px;
-      padding-left: 10px;
-    }
+    .hijos p:first-child{ padding-top: 10px;padding-left: 10px; }
     </style>
   <body>
-      <!-- INICIO CONTAINER -->
-      <div class="container">
+    <!-- INICIO CONTAINER -->
+    <div class="container">
 
-        <div class="row mb-3 mt-3">
-          <div class="col-12 btn-group" role="group" aria-label="Basic example">
-            <a href="/informes/buscarInforme.php" class="col-4">
-              <button type="button" class="btn btn-outline-primary col-12 fw-bold d-flex flex-column align-items-center" style="border-radius:0"><i class="bi bi-list-task"></i><span class="text-button"> Informes</span></button>
-            </a>
-            <a href="/informes/datoGeneral.php?id=<?php echo ($Id);?>" class="col-4">
-              <button type="button" class="btn btn-outline-primary col-12 fw-bold d-flex flex-column align-items-center" style="border-radius:0; border-left:0"><i class="bi bi-pencil-square"></i><span class="text-button"> Editar</span></button>
-            </a>
-            <a href="#" class="col-4">
-              <button type="button" class="btn btn-outline-primary col-12 fw-bold d-flex flex-column align-items-center" style="border-radius:0; border-left:0"><i class="bi bi-check-square"></i><span class="text-button"> Finalizar</span></button>
-            </a>
-          </div>
+      <div class="row mb-3 mt-3">
+        <div class="col-12 btn-group" role="group" aria-label="Basic example">
+          <button type="button" class="btn btn-outline-primary fw-bold" onclick="FnListarInformes(); return false;"><i class="fas fa-list"></i><span class="d-none d-sm-block"> Informes</span></button>
+          <button type="button" class="btn btn-outline-secondary fw-bold" <?php echo !$isAuthorized ? 'disabled' : ''; ?> onclick="FnEditarInforme(); return false;"><i class="fas fa-edit"></i><span class="d-none d-sm-block"> Editar</span></button>
+          <button type="button" class="btn btn-outline-secondary fw-bold" <?php echo !$isAuthorized ? 'disabled' : ''; ?> onclick="FnModalFinalizarInforme(); return false;"><i class="fas fa-check-square"></i><span class="d-none d-sm-block"> Finalizar</span></button>
         </div>
+      </div>
 
-        <!-- NOMBRE DE CLIENTE E INFORME -->
-        <div class="row border-bottom mb-2 fs-5">
-          <div class="col-12 fw-bold d-flex justify-content-between">
-            <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe['nombre'] : 'No autorizado' ; ?></p>
-            <input type="text" class="d-none" id="txtId" value="">
-            <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $informe['nombre'] : 'No autorizado' ; ?></p>
-          </div>
+      <!-- NOMBRE DE CLIENTE E INFORME -->
+      <div class="row border-bottom mb-2 fs-5">
+        <div class="col-12 fw-bold d-flex justify-content-between">
+          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe->clinombre : $Estado=3 ? $informe->clinombre : 'No autorizado'; ?></p>
+          <input type="text" class="d-none" id="idInforme" value="<?php echo $Id; ?>">
+          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $informe->nombre : $Estado=3 ? $informe->nombre : 'No autorizado' ; ?></p>
         </div>
+      </div>
+
+      <?php if ($isAuthorized): ?>
 
         <!-- BOTON DESCARGAR INFORME -->
         <div class="row">
@@ -229,40 +252,40 @@
           <div class="row p-1 m-0 border border-opacity-10">
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Nro. Informe</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['numero']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->numero  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Nombre Informe</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['nombre']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->nombre  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Fecha</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo   $informe['fecha']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo   $informe->fecha  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">OT N°</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['ord_nombre']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->ordnombre  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Nombre de cliente:</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['cli_nombre']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->clinombre  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Contacto</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['cli_contaco']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->clicontacto  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Lugar</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['ubicacion']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->ubicacion  ; ?></p>
             </div>
             <div class="col-6 col-sm-8 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Supervisor</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['supervisor']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->supervisor  ; ?></p>
             </div>
           </div>
         </div>
         <?php $NUMERO+=1; ?>
-        
+          
         <!-- DATOS DEL EQUIPO -->
         <div class="row p-1 mb-2 mt-2">
           <div class="col-12 mb-0 border-bottom bg-light">
@@ -271,41 +294,39 @@
           <div class="row p-1 m-0 border border-opacity-10">
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Nombre Equipo</p>
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['equ_nombre']  ; ?></p>              
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->equnombre  ; ?></p>              
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Modelo Equipo</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['equ_modelo']   ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->equmodelo   ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Serie Equipo</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['equ_serie']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->equserie  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Marca Equipo</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['equ_marca']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->equmarca  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Kilometraje</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['equ_km']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->equkm  ; ?></p>
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Horas Motor</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['equ_hm'] ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->equhm ; ?></p>
             </div>
             <div class="col-12 col-lg-6 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Carateristicas</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe['equ_datos']  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->equdatos  ; ?></p>
             </div>
             <div class="row m-0 mt-2 mb-2 p-0 d-flex justify-content-evenly">
-              <?php foreach($archivos as $archivo): ?>
-                <?php if($archivo['tabla'] =="INF"): ?>
-                  <div class="col-5 col-lg-4 col-xl-3 border border-secondary border-opacity-50">
-                    <p class="text-center text-uppercase mt-4 mb-1"><?php echo ($archivo['titulo']); ?></p>
-                    <img src="/mycloud/files/<?php echo ($archivo['nombre']); ?>" class="img-fluid" alt="">
-                    <p class="text-center text-uppercase"><?php echo ($archivo['descripcion']); ?></p>
-                  </div>
-                <?php endif ?>
+              <?php foreach($imagenInformes as $imagenInforme): ?>
+                <div class="col-5 col-lg-4 col-xl-3 border border-secondary border-opacity-50">
+                  <p class="text-center text-uppercase mt-4 mb-1"><?php echo ($imagenInforme['titulo']); ?></p>
+                  <img src="/mycloud/files/<?php echo ($imagenInforme['nombre']); ?>" class="img-fluid" alt="">
+                  <p class="text-center text-uppercase"><?php echo ($imagenInforme['descripcion']); ?></p>
+                </div>
               <?php endforeach; ?>
             </div>
           </div>
@@ -319,7 +340,7 @@
           </div>
           <div class="row p-1 m-0 border border-opacity-10">
             <div class="col-12 mb-2 mt-2">
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold" style="text-align: justify;"><?php echo  $informe['actividad']  ; ?></p>          
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold" style="text-align: justify;"><?php echo  $informe->actividad  ; ?></p>          
             </div>
           </div>
         </div>
@@ -340,7 +361,7 @@
           </div>
         </div>
         <?php $NUMERO+=1; ?>
-  
+    
         <!-- ACTIVIDADES -->
         <div class="row p-1 mb-2 mt-2">
           <div class="col-12 mb-0 border-bottom bg-light">
@@ -392,19 +413,17 @@
           </div>
           <div class="row p-1 m-0 border border-opacity-10">
             <div class="row m-0 mt-2 mb-2 p-0 d-flex justify-content-evenly">
-              <?php foreach($archivos as $archivo): ?>
-                <?php if($archivo['tabla'] =="INFA"): ?>
-                  <div class="col-5 col-lg-4 col-xl-3 border border-secondary border-opacity-50">
-                    <p class="text-center text-uppercase mt-4 mb-1"><?php echo ($archivo['titulo']); ?></p>
-                    <img src="/mycloud/files/<?php echo ($archivo['nombre']); ?>" class="img-fluid" alt="">
-                    <p class="text-center text-uppercase"><?php echo ($archivo['descripcion']); ?></p>
+              <?php foreach($imagenAnexos as $imagenAnexo): ?>
+                  <div class="col-12 col-md-10 col-xl-8 mb-4 border border-secondary border-opacity-50">
+                    <p class="text-center text-uppercase mt-4 mb-1"><?php echo ($imagenAnexo['titulo']); ?></p>
+                    <img src="/mycloud/files/<?php echo ($imagenAnexo['nombre']); ?>" class="img-fluid" alt="">
+                    <p class="text-center text-uppercase"><?php echo ($imagenAnexo['descripcion']); ?></p>
                   </div>
-                <?php endif ?>
               <?php endforeach; ?>
-              </div>
+            </div>
           </div>
         </div>
-        
+          
         <!-- ESTADO -->
         <div class="row p-1 mb-2 mt-2">
           <div class="col-12 mb-0">
@@ -422,8 +441,31 @@
           </div>
         </div>
 
-      </div><!-- CIERRE CONTAINER -->
-    <script src="js/vistaPreliminar.js"></script>
+        <div class="modal fade" id="modalFinalizarInforme" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Finalizar Órden de Trabajo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>                
+              <div class="modal-body pb-1">
+                <div class="row text-center fw-bold pt-3">                        
+                  <p class="text-center">Para finalizar la Órden <?php echo $Ot;?> haga clic en el botón CONFIRMAR.</p>                    
+                </div>
+              </div>
+              <div class="modal-body pt-1" id="msjFinalizarInforme"></div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="FnFinalizarInforme(); return false;">CONFIRMAR</button>
+              </div>              
+            </div>
+          </div>
+        </div>
+
+      <?php endif ?>
+
+    </div><!-- CIERRE CONTAINER -->
+  </body>
+  <script src="js/vistaPreliminar.js"></script>
     <script src="/mycloud/library/bootstrap-5.1.0-dist/js/bootstrap.min.js"></script>
     <script src="/mycloud/library/SweetAlert2/js/sweetalert2.all.min.js"></script>
     <?php if ($errorMessage): ?>
@@ -438,5 +480,4 @@
         });
       </script>
     <?php endif; ?>
-  </body>
 </html>

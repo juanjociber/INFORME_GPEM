@@ -18,22 +18,27 @@ $msg = 'Error general.';
 $imagenRegistrada = null;
 
 try {
-    include($_SERVER['DOCUMENT_ROOT'].'/informes/gesman/connection/ConnGesmanDb.php');
+    include($_SERVER['DOCUMENT_ROOT'].'/gesman/connection/ConnGesmanDb.php');
     require_once '../datos/InformesData.php';
 
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    $tabla = $_POST['tabla'];
+    if (!in_array($tabla, ['INF', 'INFA', 'INFD'])) {
+        throw new Exception('Tabla no válida.');
+    }
+
     $USUARIO = date('Ymd-His (').'jhuiza'.')';
 
-    $FileName = 'INFD'.'_'.$_POST['refid'].'_'.uniqid().'.jpeg';
+    $FileName = $tabla.'_'.$_POST['refid'].'_'.uniqid().'.jpeg';
     $FileType = 'IMG';
     $FileEncoded = str_replace("data:image/jpeg;base64,", "", $_POST['archivo']);
     $FileDecoded = base64_decode($FileEncoded);
-    file_put_contents($_SERVER['DOCUMENT_ROOT']."/mycloud/gesman/files/".$FileName, $FileDecoded);
+    file_put_contents($_SERVER['DOCUMENT_ROOT']."/mycloud/files/".$FileName, $FileDecoded);
 
     $imagen = new stdClass();
     $imagen->refid = $_POST['refid'];
-    $imagen->tabla = 'INFD';
+    $imagen->tabla = $tabla;
     $imagen->nombre = $FileName;
     $imagen->titulo = empty($_POST['titulo']) ? $FileName : $_POST['titulo'];
     $imagen->descripcion = empty($_POST['descripcion']) ? null : $_POST['descripcion'];
@@ -43,7 +48,7 @@ try {
     if (FnRegistrarImagen($conmy, $imagen)) {
         $msg = "Archivo registrado con éxito.";
         $res = true;
-        $imagenRegistrada = $imagen; // Retornar imagen registrada
+        $imagenRegistrada = $imagen; 
     } else {
         $msg = "Error registrando el Archivo.";
     }

@@ -2,7 +2,10 @@
 let modalEditarActividad;
 
 document.addEventListener('DOMContentLoaded', () => {
-  modalEditarActividad = new bootstrap.Modal(document.getElementById('modalActividad'), { keyboard: false });
+  const modalElement = document.getElementById('modalActividad');
+  if (modalElement) {
+    modalEditarActividad = new bootstrap.Modal(modalElement, { keyboard: false });
+  } 
 });
 
 const fnEditarActividad = async (id) => {
@@ -24,7 +27,6 @@ const fnEditarActividad = async (id) => {
     if (!datos.res) { 
       throw new Error(datos.msg); 
     }
-    console.log(datos);
     // MOSTRANDO DATA RECIBIDA DE SERVIDOR
     document.getElementById('modalActividadInput').value = datos.data.actividad;
   } 
@@ -223,7 +225,6 @@ const abrirModalEditar = async (id, cabecera) => {
     if (!datos.res) { 
       throw new Error(datos.msg); 
     }
-    console.log('RESPUESTA DEL SERVIDOR', datos);
     // MOSTRANDO DATA RECIBIDA DE SERVIDOR
     document.getElementById('actividadModalInput').value = datos.data.actividad;
     document.getElementById('diagnosticoModalInput').value = datos.data.diagnostico;
@@ -338,7 +339,6 @@ const FnModificarActividad = async () => {
 const abrirModalEliminar = async (id) => {
   const formData = new FormData();
   formData.append('id', id);
-  console.log(id);
   try {
     const response = await fetch('http://localhost/informes/delete/EliminarActividad.php', {
       method: 'POST',

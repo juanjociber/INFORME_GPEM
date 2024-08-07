@@ -6,13 +6,14 @@
   $Cliid = 2;
   $isAuthorized = false;
   $errorMessage = '';
+  $Estado=0;
 
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if (is_numeric($Id) && $Id > 0) {
       $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
-      if ($informe) {
+      if ($informe && $informe->estado !=3) {
         $isAuthorized = true;
         $archivos = FnBuscarArchivos($conmy, $Id);
       } 
@@ -45,9 +46,9 @@
       <!-- CABECERA -->
       <div class="row border-bottom mb-3 fs-5">
         <div class="col-12 fw-bold d-flex justify-content-between">
-          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? ($informe->clinombre) : 'No Autorizado'; ?></p>
-          <input type="text" class="d-none" id="txtIdInforme" value="<?php echo $isAuthorized ? ($informe->id) : ''; ?>" readonly/>
-          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? ($informe->nombre) : 'No Autorizado'; ?></p>
+          <p class="m-0 p-0 text-secondary"><?php echo ($isAuthorized || $Estado = 3) ? $informe->clinombre : 'No Autorizado'; ?></p>
+            <input type="text" class="d-none" id="txtIdInforme" value="<?php echo $informe->id; ?>" readonly/>
+          <p class="m-0 p-0 text-center text-secondary"><?php echo ($isAuthorized || $Estado = 3) ? $informe->nombre : 'No Autorizado'; ?></p>
         </div>
       </div>
       <!-- ENLACES -->
@@ -93,11 +94,11 @@
               <div class="row">
                 <div class="col-12 mb-2">
                   <label class="form-label mb-0">Título</label>
-                  <input type="text" class="form-control" id="txtTitulo" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
+                  <input type="text" class="form-control text-secondary text-uppercase" id="txtTitulo" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
                 </div>
                 <div class="col-12 mb-2">
                   <label class="form-label mb-0">Descripción</label>
-                  <input type="text" class="form-control" id="txtDescripcion" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
+                  <input type="text" class="form-control text-secondary text-uppercase" id="txtDescripcion" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
                 </div>                        
                 <div class="col-12">
                   <label for="adjuntarImagenInput" class="form-label mb-0">Imagen</label>

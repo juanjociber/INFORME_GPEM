@@ -141,7 +141,7 @@ async function FnAgregarImagen() {
     formData.append('archivo', archivo);
     formData.append('tabla', document.getElementById('tabla').value); 
 
-    const response = await fetch('http://localhost/informes/insert/AgregarArchivos.php', {
+    const response = await fetch('http://localhost/informes/insert/AgregarArchivo.php', {
       method: 'POST',
       body: formData
     });

@@ -174,7 +174,6 @@
     }
 
     // CONSULTAR INFORMES Y ARCHIVOS POR ID
-    // function FnBuscarInformesYArchivosPorId($conmy, $id) {
     function FnBuscarArchivos($conmy, $id) {
       try {
           // $stmt = $conmy->prepare("SELECT * FROM tblarchivos WHERE refid=:Id AND tabla='INF'");
@@ -187,7 +186,7 @@
       }
     }
 
-    // Buscar la última programacion en proceso, estado:1
+    // BUSCAR EQUIPO
     function FnBuscarEquipo($conmy, $id) {
         try {
             $stmt = $conmy->prepare("select idactivo, codigo, activo, grupo, marca, modelo, serie, anio, fabricante, procedencia, caracteristicas, ubicacion from man_activos where idactivo=:Id;");

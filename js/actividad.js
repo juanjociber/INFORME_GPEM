@@ -75,12 +75,10 @@ const fnCrearActividad = async () => {
   }
 };
 
-
 // CREAR SUBACTIVIDAD
 const fnCrearSubActividad = async (id) => {
   const modal = new bootstrap.Modal(document.getElementById('modalNuevaSubActividad'), { keyboard: false });
   modal.show();
-  console.log(id)
   document.getElementById('cabeceraIdInput').value = id;
 };
 
@@ -161,7 +159,6 @@ const fnGuardarSubActividad = async () =>{
 
 //BUSCAR ACTIVIDAD
 const fnEditarActividad = async (id) => {
-  // Mostrar modal
   modalEditarActividad.show();
   const formData = new FormData();
   formData.append('id', id);
@@ -402,6 +399,7 @@ async function FnAgregarImagen(){
       formData.append('titulo', document.getElementById('txtTitulo').value);
       formData.append('descripcion', document.getElementById('txtDescripcion').value);
       formData.append('archivo', archivo);
+      formData.append('tabla', document.getElementById('tabla').value);
 
       const response = await fetch('http://localhost/informes/insert/AgregarArchivo.php', {
           method:'POST',

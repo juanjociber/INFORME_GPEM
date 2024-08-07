@@ -7,12 +7,14 @@
   $isAuthorized = false;
   $errorMessage = '';
 
+  $Estado=0;
+
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if (is_numeric($Id) && $Id > 0) {
         $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
-        if ($informe) {
+        if ($informe && $informe->estado !=3) {
             $isAuthorized = true;
             $archivos = FnBuscarArchivos($conmy, $Id);
         } 
@@ -44,9 +46,9 @@
     <div class="container">
       <div class="row border-bottom mb-3 fs-5">
           <div class="col-12 fw-bold d-flex justify-content-between">
-              <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? ($informe->clinombre) : 'No Autorizado'; ?></p>
-              <input type="text" class="d-none" id="idInforme" value="<?php echo $isAuthorized ? ($informe->id) : ''; ?>" readonly/>
-              <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? ($informe->nombre) : 'No Autorizado'; ?></p>
+              <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? ($informe->clinombre) : $Estado=3 ? ($informe->clinombre) : 'No Autorizado'; ?></p>
+              <input type="text" class="d-none" id="idInforme" value="<?php echo $isAuthorized ? ($informe->id) : $Estado=3 ? ($informe->id) : ''; ?>" readonly/>
+              <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? ($informe->nombre) : $Estado=3 ? ($informe->nombre) : 'No Autorizado'; ?></p>
           </div>
       </div>
       <!-- ENLACES -->
@@ -77,7 +79,7 @@
       <div class="row g-3">
         <div class="col-6 col-lg-4 col-xl-3 mt-2">
             <label class="form-label mb-0">Nombre</label>
-            <p class="mb-0 text-secondary text-uppercase fw-bold" style="font-size:15px" id="nombreEquipo"><?php echo ($informe->nombre); ?></p>
+            <p class="mb-0 text-secondary text-uppercase fw-bold" style="font-size:15px" id="nombreEquipo"><?php echo ($informe->equnombre); ?></p>
         </div>
         <div class="col-6 col-lg-4 col-xl-3 mt-2">
           <label class="form-label mb-0">Marca</label>
@@ -137,27 +139,27 @@
             <div class="row">
               <div class="col-md-12 mt-2">
                 <label for="" class="form-label mb-0">Nombre</label>
-                <input type="text" id="nombreModalEquipo" class="form-control" row=3 placeholder="Ingrese nombre de equipo." <?php echo !$isAuthorized ? 'disabled' : ''; ?>/>
+                <input type="text" id="nombreModalEquipo" class="form-control text-secondary text-uppercase" row=3 placeholder="Ingrese nombre de equipo." <?php echo !$isAuthorized ? 'disabled' : ''; ?>/>
               </div>
               <div class ="col-md-12 mt-2">
                 <label for="" class="form-label mb-0">Marca</label>
-                <input type="text" id="marcaModalEquipo" class="form-control" placeholder="Ingrese marca." <?php echo !$isAuthorized ? 'disabled' : ''; ?>></textarea>
+                <input type="text" id="marcaModalEquipo" class="form-control text-secondary text-uppercase" placeholder="Ingrese marca." <?php echo !$isAuthorized ? 'disabled' : ''; ?>></textarea>
               </div>
               <div class="col-md-12 mt-2">
                 <label for="" class="form-label mb-0">Modelo</label>
-                <input type="text" id="modeloModalEquipo" class="form-control" placeholder="Ingrese modelo." <?php echo !$isAuthorized ? 'disabled' : ''; ?>/>
+                <input type="text" id="modeloModalEquipo" class="form-control text-secondary text-uppercase" placeholder="Ingrese modelo." <?php echo !$isAuthorized ? 'disabled' : ''; ?>/>
               </div>
               <div class="col-md-12 mt-2">
                 <label for="" class="form-label mb-0">Serie</label>
-                <input type="text" id="serieModalEquipo" class="form-control" placeholder="Ingrese número de serie." <?php echo !$isAuthorized ? 'disabled' : ''; ?>/>
+                <input type="text" id="serieModalEquipo" class="form-control text-secondary text-uppercase" placeholder="Ingrese número de serie." <?php echo !$isAuthorized ? 'disabled' : ''; ?>/>
               </div>
               <div class ="col-md-12 mt-2">
                 <label for="" class="form-label mb-0">Kilometraje</label>
-                <input type="text" id="kilometrajeModalEquipo" class="form-control" placeholder="Ingrese kilometraje." <?php echo !$isAuthorized ? 'disabled' : ''; ?>></textarea>
+                <input type="text" id="kilometrajeModalEquipo" class="form-control text-secondary text-uppercase" placeholder="Ingrese kilometraje." <?php echo !$isAuthorized ? 'disabled' : ''; ?>></textarea>
               </div>
               <div class ="col-md-12 mt-2">
                 <label for="" class="form-label mb-0">Horas de motor</label>
-                <input type="text" id="horaMotorModalEquipo" class="form-control" placeholder="Ingrese horas de motor." <?php echo !$isAuthorized ? 'disabled' : ''; ?>></textarea>
+                <input type="text" id="horaMotorModalEquipo" class="form-control text-secondary text-uppercase" placeholder="Ingrese horas de motor." <?php echo !$isAuthorized ? 'disabled' : ''; ?>></textarea>
               </div>
               <div id="contenedorGuardarActividad" class="col-6 mt-4">
                 <button id="guardarActividad" class="btn btn-primary fw-bold text-uppercase pt-2 pb-2 col-12"onclick="fnEditarDatosEquipo();" ><i class="bi bi-floppy"></i> Guadar</button>
@@ -183,11 +185,11 @@
             <div class="row">
               <div class="col-12 mb-2">
                 <label class="form-label mb-0">Título</label>
-                <input type="text" class="form-control" id="txtTitulo" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
+                <input type="text" class="form-control text-secondary text-uppercase" id="txtTitulo" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
               </div>
               <div class="col-12 mb-2">
                 <label class="form-label mb-0">Descripción</label>
-                <input type="text" class="form-control" id="txtDescripcion" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
+                <input type="text" class="form-control text-secondary text-uppercase" id="txtDescripcion" <?php echo !$isAuthorized ? 'disabled' : ''; ?>>
               </div>                        
               <div class="col-12">
                 <label for="adjuntarImagenInput" class="form-label mb-0">Imagen</label>

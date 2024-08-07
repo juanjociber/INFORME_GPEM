@@ -3,51 +3,60 @@ const cargaSelect = () => {
   const initCustomSelect = (inputId, listId) => {
     const selectInput = document.getElementById(inputId);
     const selectList = document.getElementById(listId);
+
+    if (!selectInput || !selectList) {
+      return;
+    }
+
     const selectItems = selectList.getElementsByClassName('custom-select-item');
     // MOSTRAR / OCULTAR LISTA AL HACER CLIC EN INPUT
     selectInput.addEventListener('click', function() {
-        selectList.style.display = selectList.style.display === 'block' ? 'none' : 'block';
+      selectList.style.display = selectList.style.display === 'block' ? 'none' : 'block';
     });
+
     // SELECCIONAR UN ELEMENTO DE LA LISTA
     Array.from(selectItems).forEach(item => {
-        item.addEventListener('click', function() {
-            selectInput.value = this.textContent.trim();
-            //GUARDANDO VALOR ASOCIONADO AL SELECCIONAR
-            selectInput.dataset.value = this.dataset.value;
-            selectList.style.display = 'none';
-        });
+      item.addEventListener('click', function() {
+        selectInput.value = this.textContent.trim();
+        // GUARDANDO VALOR ASOCIADO AL SELECCIONAR
+        selectInput.dataset.value = this.dataset.value;
+        selectList.style.display = 'none';
+      });
     });
+
     // OCULTAR LISTA SI SE HACE CLIC FUERA DE LISTA
     document.addEventListener('click', function(event) {
-        if (!event.target.closest('.custom-select-wrapper')) {
-            selectList.style.display = 'none';
-        }
+      if (!event.target.closest('.custom-select-wrapper')) {
+        selectList.style.display = 'none';
+      }
     });
+
     // FILTRAR ELEMENTOS DE LA LISTA AL ESCRIBIR EN EL INPUT
     selectInput.addEventListener('input', function() {
-        const filter = selectInput.value.toLowerCase();
-        let textoEncontrado = false;
-        Array.from(selectItems).forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (text.includes(filter)) {
-                item.style.display = '';
-                textoEncontrado = true;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        selectList.style.display = 'block';
-
-        // LIMPIAR EL INPUT SI NO HAY CONCIDENCIAS
-        if (!textoEncontrado) {
-            selectInput.value = '';
-            // MOSTRAR TODAS LAS OPCIONES DE LA LISTA
-            Array.from(selectItems).forEach(item => {
-                item.style.display = '';
-            });
+      const filter = selectInput.value.toLowerCase();
+      let textoEncontrado = false;
+      Array.from(selectItems).forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(filter)) {
+          item.style.display = '';
+          textoEncontrado = true;
+        } else {
+          item.style.display = 'none';
         }
+      });
+      selectList.style.display = 'block';
+
+      // LIMPIAR EL INPUT SI NO HAY CONCIDENCIAS
+      if (!textoEncontrado) {
+        selectInput.value = '';
+        // MOSTRAR TODAS LAS OPCIONES DE LA LISTA
+        Array.from(selectItems).forEach(item => {
+          item.style.display = '';
+        });
+      }
     });
-  }
+  };
+
   // INICIALIZANDO SELECT
   initCustomSelect('contactoInput', 'contactoList');
   initCustomSelect('supervisorInput', 'supervisorList');
@@ -55,6 +64,7 @@ const cargaSelect = () => {
 
 // LLAMANDO FUNCIÓN CARGA DE SELECT
 document.addEventListener('DOMContentLoaded', cargaSelect);
+
 
 // FUNCIÓN GUARDAR DATOS GENERALES
 const fnGuardarDatosGenerales = async () => {
