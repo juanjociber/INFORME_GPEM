@@ -76,7 +76,7 @@ function displayImage(file) {
 
           canvas.toBlob(
               (blob) => {
-                  // Handle the compressed image. es. upload or save in local state
+                  
                   displayInfo('Original: ', file);
                   displayInfo('Comprimido: ', blob);
               },
@@ -121,45 +121,91 @@ function calculateSize(img, maxWidth, maxHeight) {
   return [width, height];
 }
 
-async function FnAgregarImagen(){
-  //vgLoader.classList.remove('loader-full-hidden');
+async function FnAgregarImagen() {
+  // vgLoader.classList.remove('loader-full-hidden');
   try {
-      var archivo;
+    let archivo;
+    if (document.getElementById('canvas')) {
+      archivo = document.querySelector("#canvas").toDataURL("image/jpeg");
+    } 
+    else if (document.getElementById('fileImagen').files.length == 1) {
+      archivo = document.getElementById('fileImagen').files[0];
+    } 
+    else {
+      throw new Error('No se reconoce el archivo');
+    }
+    const formData = new FormData();
+    formData.append('refid', document.getElementById('txtIdInforme').value);
+    formData.append('titulo', document.getElementById('txtTitulo').value);
+    formData.append('descripcion', document.getElementById('txtDescripcion').value);
+    formData.append('archivo', archivo);
+    formData.append('tabla', document.getElementById('tabla').value); 
 
-      if(document.getElementById('canvas')){
-          archivo = document.querySelector("#canvas").toDataURL("image/jpeg");
-      }else if(document.getElementById('fileImagen').files.length == 1){
-          archivo = fileOrCanvasData = document.getElementById('fileImagen').files[0];
-      }else{
-          throw new Error('No se reconoce el archivo');
-      }
+    const response = await fetch('http://localhost/informes/insert/AgregarArchivos.php', {
+      method: 'POST',
+      body: formData
+    });
 
-      const formData = new FormData();
-      formData.append('refid', document.getElementById('idInforme').value);
-      formData.append('titulo', document.getElementById('txtTitulo').value);
-      formData.append('descripcion', document.getElementById('txtDescripcion').value);
-      formData.append('archivo', archivo);
-
-      const response = await fetch('http://localhost/informes/insert/AgregarArchivoEquipo.php', {
-          method:'POST',
-          body: formData
-      });
-
-      if(!response.ok){throw new Error(`${response.status} ${response.statusText}`);}
-      const datos = await response.json();
-      if(!datos.res){throw new Error(datos.msg);}
-      Swal.fire({
-        title: "Éxito",
-        text: datos.msg,
-        icon: "success",
-        timer:2000
-      });
-      setTimeout(function() {location.reload();}, 1000)
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`);
+    }
+    const datos = await response.json();
+    if (!datos.res) {
+      throw new Error(datos.msg);
+    }
+    Swal.fire({
+      title: "Éxito",
+      text: datos.msg,
+      icon: "success",
+      timer: 2000
+    });
+    setTimeout(function() { location.reload(); }, 1000);
 
   } catch (error) {
-      document.getElementById('msjAgregarImagen').innerHTML = `<div class="alert alert-danger m-0 p-1 text-center" role="alert">${error.message}</div>`;
-      setTimeout(function() {
-        //vgLoader.classList.add('loader-full-hidden');
-      }, 1000)
+    document.getElementById('msjAgregarImagen').innerHTML = `<div class="alert alert-danger m-0 p-1 text-center" role="alert">${error.message}</div>`;
+    setTimeout(function() {
+      // vgLoader.classList.add('loader-full-hidden');
+    }, 1000);
   }
 }
+
+//ELIMINAR ARCHIVO
+const fnEliminarAnexo = async (id) => {
+  const formData = new FormData();
+  formData.append('id', id);
+  console.log(id);
+  try {
+      const response = await fetch('http://localhost/informes/delete/EliminarArchivo.php', {
+          method: 'POST',
+          body: formData,
+          headers: {
+              'Accept': 'application/json'
+          }
+      });
+
+      const result = await response.json();
+      if (result.res) {
+          const elemento = document.getElementById(id);
+          if (elemento) {
+              elemento.remove();
+          }
+          Swal.fire({
+            title: "Información de servidor",
+            text: result.msg,
+            icon: "success"
+          });
+          setTimeout(() => {
+            location.reload();          
+          }, 2000);
+      } else {
+        Swal.fire({
+          title: "Información de servidor",
+          text: result.msg,
+          icon: "error",
+          timer: 2000
+        });
+      }
+  } catch (error) {
+      console.error('Error:', error);
+  }
+ };

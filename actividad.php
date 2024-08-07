@@ -187,6 +187,10 @@
         $errorMessage = 'El ID es inválido.';
       }
     }
+    $tablaHTML = '<div class="accordion" id="accordion-container-'.$nodo['id'].'">';
+    $tabla = FnGenerarInformeHtmlAcordeon($arbol, $imagenes);
+    $tablaHTML .= $tabla;
+    $tablaHTML .= '</div>';
   } catch (PDOException $ex) {
     $errorMessage = $ex->getMessage();
   } catch (Exception $ex) {
@@ -195,10 +199,7 @@
   } finally {
       $conmy = null;
   }
-  $tablaHTML = '<div class="accordion" id="accordion-container-'.$nodo['id'].'">';
-  $tabla = FnGenerarInformeHtmlAcordeon($arbol, $imagenes);
-  $tablaHTML .= $tabla;
-  $tablaHTML .= '</div>';
+
 ?>
 
 <!DOCTYPE html>
@@ -359,7 +360,7 @@
         </div>
       </div>
     </div><!-- END EDITAR ACTIVIDAD - M O D A L -->
-
+         
     <!-- START IMAGENES - M O D A L -->
     <div class="modal fade" id="modalAgregarImagen" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-scrollable ">

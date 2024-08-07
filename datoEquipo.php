@@ -169,6 +169,7 @@
       </div>
     </div><!-- END MODAL -->
 
+    <input type="hidden" id="tabla" value="INF"> 
     <!-- M O D A L - I M A G E N E S -->
     <div class="modal fade" id="modalAgregarImagen" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-scrollable ">

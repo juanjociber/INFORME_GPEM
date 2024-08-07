@@ -107,85 +107,66 @@
 		return $html;
 	}
 
-  function obtenerInforme($conmy, $Id, $Cliid) {
-    $stmt = $conmy->prepare("SELECT id, ordid, equid, cliid, numero, nombre, fecha, ord_nombre, cli_nombre, cli_contacto, ubicacion, supervisor, equ_codigo, equ_nombre, equ_marca, equ_modelo, equ_serie, equ_datos, equ_km, equ_hm, actividad, estado FROM tblinforme WHERE id = :Id AND cliid = :Cliid;");
-    $stmt->execute([':Id' => $Id, ':Cliid' => $Cliid]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-  }
-
-  function obtenerDetallesInforme($conmy, $id) {
-    $stmt = $conmy->prepare("SELECT id, ownid, tipo, actividad, diagnostico, trabajos, observaciones FROM tbldetalleinforme WHERE infid = :InfId;");
-    $stmt->bindParam(':InfId', $id, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-  }
-
-  function obtenerArchivos($conmy, $ids) {
-    $placeholders = implode(',', array_fill(0, count($ids), '?')); 
-    $stmt = $conmy->prepare("SELECT id, refid, nombre, descripcion, titulo FROM tblarchivos WHERE refid IN ($placeholders) AND tabla = ? AND tipo = ?");
-    $params = array_merge($ids, ['INFD', 'IMG']); 
-    $stmt->execute($params);
-    $imagenes = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $imagenes[$row['refid']][] = [
-          'id' => (int)$row['id'],
-          'nombre' => $row['nombre'],
-          'descripcion' => $row['descripcion'],
-          'titulo' => $row['titulo']
-        ];
-    }
-    return $imagenes;
-  }
-
+    
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    if (is_numeric($Id) && $Id > 0) {
-      $informe = obtenerInforme($conmy, $Id, $Cliid);
-      if ($informe) {
-        $isAuthorized = true;
-        $actividadesDetalles = obtenerDetallesInforme($conmy, $Id);
-        $actividades = [];
-        $conclusiones = [];
-        $recomendaciones = [];
-        $antecedentes = [];
-        foreach ($actividadesDetalles as $dato) {
-          switch ($dato['tipo']) {
-            case 'act':
-              $actividades[] = [
-                  'id' => $dato['id'],
-                  'ownid' => $dato['ownid'],
-                  'tipo' => $dato['tipo'],
-                  'actividad' => $dato['actividad'],
-                  'diagnostico' => $dato['diagnostico'],
-                  'trabajos' => $dato['trabajos'],
-                  'observaciones' => $dato['observaciones'],
-              ];
-              break;
-            case 'con':
-              $conclusiones[] = ['actividad' => $dato['actividad']];
-                break;
-            case 'rec':
-              $recomendaciones[] = ['actividad' => $dato['actividad']];
-              break;
-            case 'ant':
-              $antecedentes[] = ['actividad' => $dato['actividad']];
-              break;
-          }
+
+    if (!empty($_GET['id'])) {
+      
+        $informe  = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
+        $archivos = FnBuscarArchivos($conmy, $Id);
+        $datos = FnBuscarActividades($conmy, $Id);
+        $actividades=array();
+        $conclusiones=array();
+        $recomendaciones=array();
+        $antecedentes=array();
+    
+        foreach($datos as $dato){
+          if($dato['tipo']=='act'){
+            $actividades[]=array(
+              'id'=>$dato['id'],
+              'ownid'=>$dato['ownid'],
+              'tipo'=>$dato['tipo'],
+              'actividad'=>$dato['actividad'],
+              'diagnostico'=>$dato['diagnostico'],
+              'trabajos'=>$dato['trabajos'],
+              'observaciones'=>$dato['observaciones'],
+            );
+          }else if($dato['tipo']=='con'){
+            $conclusiones[]=array('actividad'=>$dato['actividad']);
+          }else if($dato['tipo']=='rec'){
+            $recomendaciones[]=array('actividad'=>$dato['actividad']);
+          }else if($dato['tipo']=='ant'){
+            $antecedentes[]=array('actividad'=>$dato['actividad']);
+          }	
         }
         $arbol = construirArbol($actividades);
-        $ids = array_column($actividades, 'id');
-        $imagenes = obtenerArchivos($conmy, $ids);
-      }else{
-        $errorMessage = 'Informe no encontrado o acceso denegado';
-      }
+        $ids = array_map(function($elemento) {
+          return $elemento['id'];
+        }, $actividades);
+    
+        $cadenaIds = implode(',', $ids);
+        $imagenes=array();
+        $stmt3 = $conmy->prepare("select id, refid, nombre, descripcion, titulo from tblarchivos where refid IN(".$cadenaIds.") and tabla=:Tabla and tipo=:Tipo;");				
+        $stmt3->execute(array(':Tabla'=>'INFD', ':Tipo'=>'IMG'));
+        while($row3=$stmt3->fetch(PDO::FETCH_ASSOC)){
+          $imagenes[$row3['refid']][]=array(
+            'id'=>(int)$row3['id'],
+            'nombre'=>$row3['nombre'],
+            'descripcion'=>$row3['descripcion'],
+            'titulo'=>$row3['titulo'],
+          );
+        }
     }
-  } catch (PDOException $ex) {
-      $errorMessage = $ex->getMessage();
-  } catch (Exception $ex) {
-      $errorMessage = $ex->getMessage();
+   
+  } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+  } catch (Exception $e) {
+      throw new Exception($e->getMessage());
   } finally {
       $conmy = null;
   }
+
 ?>
 <!doctype html>
 <html lang="es">
@@ -227,13 +208,12 @@
         <!-- NOMBRE DE CLIENTE E INFORME -->
         <div class="row border-bottom mb-2 fs-5">
           <div class="col-12 fw-bold d-flex justify-content-between">
-            <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe['cli_nombre'] : 'No autorizado' ; ?></p>
+            <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe['nombre'] : 'No autorizado' ; ?></p>
             <input type="text" class="d-none" id="txtId" value="">
             <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $informe['nombre'] : 'No autorizado' ; ?></p>
           </div>
         </div>
 
-        <?php if ($isAuthorized): ?>
         <!-- BOTON DESCARGAR INFORME -->
         <div class="row">
           <div id="generarInforme" class="col-6 col-lg-3 mt-4 mb-4">
@@ -319,11 +299,13 @@
             </div>
             <div class="row m-0 mt-2 mb-2 p-0 d-flex justify-content-evenly">
               <?php foreach($archivos as $archivo): ?>
-                <div class="col-5 col-lg-4 col-xl-3 border border-secondary border-opacity-50">
-                  <p class="text-center text-uppercase mt-4 mb-1"><?php echo ($archivo['titulo']); ?></p>
-                  <img src="/mycloud/files/<?php echo ($archivo['nombre']); ?>" class="img-fluid" alt="">
-                  <p class="text-center text-uppercase"><?php echo ($archivo['descripcion']); ?></p>
-                </div>
+                <?php if($archivo['tabla'] =="INF"): ?>
+                  <div class="col-5 col-lg-4 col-xl-3 border border-secondary border-opacity-50">
+                    <p class="text-center text-uppercase mt-4 mb-1"><?php echo ($archivo['titulo']); ?></p>
+                    <img src="/mycloud/files/<?php echo ($archivo['nombre']); ?>" class="img-fluid" alt="">
+                    <p class="text-center text-uppercase"><?php echo ($archivo['descripcion']); ?></p>
+                  </div>
+                <?php endif ?>
               <?php endforeach; ?>
             </div>
           </div>
@@ -409,7 +391,17 @@
             <p class="mt-2 mb-2 fw-bold  text-secondary"><?php echo $NUMERO; ?>- ANEXOS</p>
           </div>
           <div class="row p-1 m-0 border border-opacity-10">
-            <!-- ACÁ VAN LOS ANEXOS -->
+            <div class="row m-0 mt-2 mb-2 p-0 d-flex justify-content-evenly">
+              <?php foreach($archivos as $archivo): ?>
+                <?php if($archivo['tabla'] =="INFA"): ?>
+                  <div class="col-5 col-lg-4 col-xl-3 border border-secondary border-opacity-50">
+                    <p class="text-center text-uppercase mt-4 mb-1"><?php echo ($archivo['titulo']); ?></p>
+                    <img src="/mycloud/files/<?php echo ($archivo['nombre']); ?>" class="img-fluid" alt="">
+                    <p class="text-center text-uppercase"><?php echo ($archivo['descripcion']); ?></p>
+                  </div>
+                <?php endif ?>
+              <?php endforeach; ?>
+              </div>
           </div>
         </div>
         
@@ -429,7 +421,7 @@
             </div>            
           </div>
         </div>
-        <?php endif ?>
+
       </div><!-- CIERRE CONTAINER -->
     <script src="js/vistaPreliminar.js"></script>
     <script src="/mycloud/library/bootstrap-5.1.0-dist/js/bootstrap.min.js"></script>

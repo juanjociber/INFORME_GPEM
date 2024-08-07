@@ -18,7 +18,7 @@ $msg = 'Error general.';
 $imagenRegistrada = null;
 
 try {
-    include($_SERVER['DOCUMENT_ROOT'].'/gesman/connection/ConnGesmanDb.php');
+    include($_SERVER['DOCUMENT_ROOT'].'/informes/gesman/connection/ConnGesmanDb.php');
     require_once '../datos/InformesData.php';
 
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -29,7 +29,7 @@ try {
     $FileType = 'IMG';
     $FileEncoded = str_replace("data:image/jpeg;base64,", "", $_POST['archivo']);
     $FileDecoded = base64_decode($FileEncoded);
-    file_put_contents($_SERVER['DOCUMENT_ROOT']."/mycloud/files/".$FileName, $FileDecoded);
+    file_put_contents($_SERVER['DOCUMENT_ROOT']."/mycloud/gesman/files/".$FileName, $FileDecoded);
 
     $imagen = new stdClass();
     $imagen->refid = $_POST['refid'];

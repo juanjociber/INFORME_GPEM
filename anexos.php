@@ -79,6 +79,7 @@
         </div>
       <?php endif; ?>
 
+      <input type="hidden" id="tabla" value="INFA"> 
       <!-- M O D A L - I M A G E N E S -->
       <div class="modal fade" id="modalAnexo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable ">
@@ -115,18 +116,15 @@
         </div>
       </div>
       <!-- ARCHIVOS-IMAGEN -->
-      <div class="row">
+      <div class="row m-0 mt-2 mb-2 p-0 d-flex justify-content-evenly">
         <?php if ($isAuthorized): ?>
           <?php foreach($archivos as $archivo): ?>
             <?php if ($archivo['tabla'] ==='INFA'): ?>
-            <input type="hidden" id="refid" value="<?php echo ($archivo['refid']); ?>">
-            <div class="caja-imagen col-6 col-lg-3" id="<?php echo ($archivo['archivoid']); ?>">
-              <div class="contenedor-imagen">
-                <p class="text-center mt-4 mb-1"><?php echo ($archivo['titulo']); ?></p>
-                  <i class="bi bi-x-lg" style="position: absolute; font-size: 23px;color: tomato;top: 40px;left: 5px; top:5px" onclick="fnEliminarAnexo(<?php echo ($archivo['archivoid']); ?>)"></i>
-                  <img src="/mycloud/files/ORD_112_651f18cf9b6de.jpeg" class="img-fluid" alt="">
-                <p class="text-center"><?php echo ($archivo['descripcion']); ?></p>
-              </div>
+            <div class="col-5 col-lg-4 col-xl-3 mb-4 border border-secondary border-opacity-50 position-relative" id="<?php echo ($archivo['id']); ?>">
+              <p class="text-center mt-4 mb-1 text-secondary text-uppercase fw-bold"><?php echo ($archivo['titulo']); ?></p>
+                <i class="bi bi-x-lg" style="position: absolute; font-size: 23px;color: tomato;top: 40px;left: 5px; top:5px" onclick="fnEliminarAnexo(<?php echo ($archivo['id']); ?>)"></i>
+                <img src="/mycloud/files/<?php echo ($archivo['nombre']); ?>" class="img-fluid" alt="">
+              <p class="text-center text-secondary text-uppercase fw-bold"><?php echo ($archivo['descripcion']); ?></p>
             </div>
             <?php endif; ?>
           <?php endforeach; ?>
