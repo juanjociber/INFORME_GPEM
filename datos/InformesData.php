@@ -1,7 +1,7 @@
 <?php 
     function FnRegistrarInforme($conmy, $orden, $cliente, $equipo, $fecha, $actividad, $usuario) {
         try {
-            $stmt = $conmy->prepare("CALL spman_agregarinforme(:_ordid, :_equid, :_cliid, :_fecha, :_ordnombre, :_clinombre, :_clicontacto, :_ubicacion, :_supervisor, :_equcodigo, :_equnombre, :_equmarca, :_equmodelo, :_equserie, :_equdatos, :_equkm, :_equhm, :_actividad, :_usuario, @_id)");
+            $stmt = $conmy->prepare("CALL spman_agregarinforme(:_ordid, :_equid, :_cliid, :_fecha, :_ordnombre, :_clinombre, :_clicontacto, :_cli_direccion, :_supervisor, :_equcodigo, :_equnombre, :_equmarca, :_equmodelo, :_equserie, :_equdatos, :_equkm, :_equhm, :_actividad, :_usuario, @_id)");
             $stmt->bindParam(':_ordid', $orden->id, PDO::PARAM_INT);
             $stmt->bindParam(':_equid', $equipo->id, PDO::PARAM_INT);
             $stmt->bindParam(':_cliid', $cliente->id, PDO::PARAM_INT);
@@ -9,7 +9,7 @@
             $stmt->bindParam(':_ordnombre', $orden->nombre, PDO::PARAM_STR);
             $stmt->bindParam(':_clinombre', $cliente->nombre, PDO::PARAM_STR);
             $stmt->bindParam(':_clicontacto', $orden->contacto, PDO::PARAM_STR);
-            $stmt->bindParam(':_ubicacion', $equipo->ubicacion, PDO::PARAM_STR);
+            $stmt->bindParam(':_cli_direccion', $equipo->cli_direccion, PDO::PARAM_STR);
             $stmt->bindParam(':_supervisor', $orden->supervisor, PDO::PARAM_STR);
             $stmt->bindParam(':_equcodigo', $equipo->codigo, PDO::PARAM_STR);
             $stmt->bindParam(':_equnombre', $equipo->nombre, PDO::PARAM_STR);
@@ -37,8 +37,8 @@
     function FnModificarInforme($conmy, $informe) {
         try {
             $res=false;
-            $stmt = $conmy->prepare("update tblinforme set fecha=:Fecha, cli_contacto=:CliContacto, ubicacion=:Ubicacion, supervisor=:Supervisor, actualizacion=:Actualizacion;");
-            $params = array(':Fecha'=>$informe->fecha, ':CliContacto'=>$informe->clicontacto, ':Ubicacion'=>$informe->ubicacion, ':Supervisor'=>$informe->supervisor, ':Actualizacion'=>$informe->actualizacion);
+            $stmt = $conmy->prepare("update tblinforme set fecha=:Fecha, cli_contacto=:CliContacto, cli_direccion=:Cli_direccion, supervisor=:Supervisor, actualizacion=:Actualizacion;");
+            $params = array(':Fecha'=>$informe->fecha, ':CliContacto'=>$informe->clicontacto, ':Cli_direccion'=>$informe->cli_direccion, ':Supervisor'=>$informe->supervisor, ':Actualizacion'=>$informe->actualizacion);
             if($stmt->execute($params)){
                 $res=true;
             }
@@ -51,13 +51,19 @@
     function FnModificarInformeDatosGenerales($conmy, $informe) {
         try {
             $res = false;
-            $stmt = $conmy->prepare("UPDATE tblinforme SET fecha = :Fecha, cli_contacto = :CliContacto, ubicacion = :Ubicacion, supervisor = :Supervisor, actualizacion = :Actualizacion WHERE id=:Id");
+            $fecha = strtoupper($informe->fecha);
+            $cliContacto = strtoupper($informe->clicontacto);
+            $cliDireccion = strtoupper($informe->clidireccion);
+            $supervisor = strtoupper($informe->supervisor);
+            $actualizacion = strtoupper($informe->actualizacion);
+    
+            $stmt = $conmy->prepare("UPDATE tblinforme SET fecha = :Fecha, cli_contacto = :CliContacto, cli_direccion = :Clidireccion, supervisor = :Supervisor, actualizacion = :Actualizacion WHERE id=:Id");
             $params = array(
-                ':Fecha' => $informe->fecha,
-                ':CliContacto' => $informe->clicontacto,
-                ':Ubicacion' => $informe->ubicacion,
-                ':Supervisor' => $informe->supervisor,
-                ':Actualizacion' => $informe->actualizacion,
+                ':Fecha' => $fecha,
+                ':CliContacto' => $cliContacto,
+                ':Clidireccion' => $cliDireccion,
+                ':Supervisor' => $supervisor,
+                ':Actualizacion' => $actualizacion,
                 ':Id' => $informe->id,
             );
             if ($stmt->execute($params)) {
@@ -68,28 +74,37 @@
             throw new Exception($e->getMessage());
         }
     }
-
+    
     function FnModificarInformeDatosEquipos($conmy, $informe) {
         try {
             $res = false;
-            $stmt = $conmy->prepare("update 
-            tblinforme set 
-            equ_nombre = :EquNombre, 
-            equ_marca = :EquMarca, 
-            equ_modelo = :EquModelo, 
-            equ_serie = :EquSerie, 
-            equ_km = :EquKm, 
-            equ_hm = :EquHm, 
-            actualizacion = :Actualizacion where id=:Id;");
+            $equNombre = strtoupper($informe->equnombre);
+            $equMarca = strtoupper($informe->equmarca);
+            $equModelo = strtoupper($informe->equmodelo);
+            $equSerie = strtoupper($informe->equserie);
+            $equKm = strtoupper($informe->equkm);
+            $equHm = strtoupper($informe->equhm);
+            $actualizacion = strtoupper($informe->actualizacion);
+    
+            $stmt = $conmy->prepare("UPDATE 
+                tblinforme SET 
+                equ_nombre = :EquNombre, 
+                equ_marca = :EquMarca, 
+                equ_modelo = :EquModelo, 
+                equ_serie = :EquSerie, 
+                equ_km = :EquKm, 
+                equ_hm = :EquHm, 
+                actualizacion = :Actualizacion 
+                WHERE id = :Id;");
             $params = array(
-              ':EquNombre' => $informe->equnombre,
-              ':EquMarca' => $informe->equmarca,
-              ':EquModelo' => $informe->equmodelo,
-              ':EquSerie' => $informe->equserie,
-              ':EquKm' => $informe->equkm,
-              ':EquHm' => $informe->equhm,
-              ':Actualizacion' => $informe->actualizacion,
-              ':Id' => $informe->id 
+                ':EquNombre' => $equNombre,
+                ':EquMarca' => $equMarca,
+                ':EquModelo' => $equModelo,
+                ':EquSerie' => $equSerie,
+                ':EquKm' => $equKm,
+                ':EquHm' => $equHm,
+                ':Actualizacion' => $actualizacion,
+                ':Id' => $informe->id 
             );
             if ($stmt->execute($params)) {
                 $res = true;
@@ -99,12 +114,11 @@
             throw new Exception($e->getMessage());
         }
     }
-
     
     // BUSCAR INFORME MATRIZ
     function FnBuscarInformeMatriz($conmy, $id, $cliid) {
       try {
-        $stmt = $conmy->prepare("SELECT id, ordid, equid, cliid, numero, nombre, fecha, ord_nombre, cli_nombre, cli_contacto, ubicacion, supervisor, equ_codigo, equ_nombre, equ_marca, equ_modelo, equ_serie, equ_datos, equ_km, equ_hm, actividad, estado FROM tblinforme WHERE id = :Id AND cliid = :Cliid");
+        $stmt = $conmy->prepare("SELECT id, ordid, equid, cliid, numero, nombre, fecha, ord_nombre, cli_nombre, cli_contacto, cli_direccion, supervisor, equ_codigo, equ_nombre, equ_marca, equ_modelo, equ_serie, equ_datos, equ_km, equ_hm, actividad, estado FROM tblinforme WHERE id = :Id AND cliid = :Cliid");
         $stmt->execute(array(':Id' => $id, ':Cliid' => $cliid));
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row) {
@@ -119,7 +133,7 @@
             $informe->ordnombre = $row['ord_nombre'];
             $informe->clinombre = $row['cli_nombre'];
             $informe->clicontacto = $row['cli_contacto'];
-            $informe->ubicacion = $row['ubicacion'];
+            $informe->clidireccion = $row['cli_direccion'];
             $informe->supervisor = $row['supervisor'];
             $informe->equcodigo = $row['equ_codigo'];
             $informe->equnombre = $row['equ_nombre'];
@@ -189,7 +203,7 @@
     // BUSCAR EQUIPO
     function FnBuscarEquipo($conmy, $id) {
         try {
-            $stmt = $conmy->prepare("select idactivo, codigo, activo, grupo, marca, modelo, serie, anio, fabricante, procedencia, caracteristicas, ubicacion from man_activos where idactivo=:Id;");
+            $stmt = $conmy->prepare("select idactivo, codigo, activo, grupo, marca, modelo, serie, anio, fabricante, procedencia, caracteristicas, cli_direccion from man_activos where idactivo=:Id;");
             $stmt->execute(array(':Id'=>$id));
             $equipo = new stdClass();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -204,7 +218,7 @@
                 $equipo->fabricante = $row['fabricante'];
                 $equipo->procedencia = $row['procedencia'];
                 $equipo->datos = $row['caracteristicas'];
-                $equipo->ubicacion = $row['ubicacion'];
+                $equipo->cli_direccion = $row['cli_direccion'];
             }
             return $equipo;
         } catch (PDOException $e) {

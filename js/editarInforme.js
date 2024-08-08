@@ -72,43 +72,44 @@ const fnGuardarDatosGenerales = async () => {
   formData.append('id', document.querySelector('#idInforme').value);
   formData.append('fecha', document.querySelector('#fechaInformeInput').value.trim());
   formData.append('clicontacto', document.querySelector('#contactoInput').value.trim()); 
-  formData.append('ubicacion', document.querySelector('#ubicacionInput').value.trim()); 
+  formData.append('clidireccion', document.querySelector('#ubicacionInput').value.trim()); 
   formData.append('supervisor', document.querySelector('#supervisorInput').value.trim());
-  //console.log('Datos a enviar: ', {id, fecha, clicontacto, ubicacion, supervisor });
+
   try {
     const response = await fetch('http://localhost/informes/update/ModificarDatosGenerales.php', {
       method: 'POST',
       body: formData
     });
 
-    if (!response.ok) {
-      throw new Error(response.status + ' ' + response.statusText);
-    }
-    const datos = await response.json();
+    const textResponse = await response.text();
+    console.log('Raw response: ', textResponse);
+
+    const datos = JSON.parse(textResponse);
 
     if (datos.res) {
       Swal.fire({
         title: "Información de servidor",
         text: datos.msg,
         icon: "success",
-        timer:2000,
+        timer: 2000,
       });
     } else {
       Swal.fire({
         title: "Respuesta del servidor",
         text: datos.msg,
         icon: "info",
-        timer:2000
+        timer: 2000
       });
     }
   } catch (error) {
     Swal.fire({
       title: "Información de servidor",
-      text: error,
+      text: error.message,
       icon: "info",
-      timer:2000,
+      timer: 2000,
     });
   }
 }
+
   
 

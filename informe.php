@@ -2,16 +2,15 @@
   require_once $_SERVER['DOCUMENT_ROOT']."/gesman/connection/ConnGesmanDb.php";
   require_once 'Datos/InformesData.php';
 
-  // $Id = isset($_GET['id']) ? $_GET['id'] : '';
+  //$Id = isset($_GET['id']) ? $_GET['id'] : '';
   $Id = $_GET['id'];
   $Cliid = 2;
   $isAuthorized = false;
   $errorMessage = ''; 
-
+  $Estado=0;
   $NUMERO=1;
   $Nombre='';
-	$Estado= $informe->estado;
-
+  $ClienteNombre='';
 	$tablaHTML ='';
 
 	function construirArbol($registros, $padreId = 0) {
@@ -22,7 +21,6 @@
 				if (!empty($hijos)) {
 					$registro['hijos'] = $hijos;
 				}
-        //DANDOLE ESTILOS uppercase CUANDO EL NODO RAIZ ES HIJO
         if ($padreId != 0) {
           $registro['actividad'] = strtoupper($registro['actividad']);
           $registro['diagnostico'] = strtoupper($registro['diagnostico']);
@@ -122,6 +120,9 @@
     $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
     if (!empty($informe) && $informe->estado != 3) {
       $isAuthorized = true;
+      $Nombre = $informe->nombre;
+      $ClienteNombre = $informe->clinombre;
+      $Estado = $informe->estado;
       $archivos = FnBuscarArchivos($conmy, $Id);
       $datos = FnBuscarActividades($conmy, $Id);
       if (!empty($datos)) {
@@ -201,7 +202,7 @@
 
   $claseHabilitado = "btn-outline-secondary";
   $atributoHabilitado = " disabled";
-  if($Estado == 1 || $Estado == 2){
+  if($Estado == 1){
       $claseHabilitado = "btn-outline-primary";
       $atributoHabilitado = "";
   }
@@ -229,17 +230,17 @@
       <div class="row mb-3 mt-3">
         <div class="col-12 btn-group" role="group" aria-label="Basic example">
           <button type="button" class="btn btn-outline-primary fw-bold" onclick="FnListarInformes(); return false;"><i class="fas fa-list"></i><span class="d-none d-sm-block"> Informes</span></button>
-          <button type="button" class="btn btn-outline-secondary fw-bold" <?php echo !$isAuthorized ? 'disabled' : ''; ?> onclick="FnEditarInforme(); return false;"><i class="fas fa-edit"></i><span class="d-none d-sm-block"> Editar</span></button>
-          <button type="button" class="btn btn-outline-secondary fw-bold" <?php echo !$isAuthorized ? 'disabled' : ''; ?> onclick="FnModalFinalizarInforme(); return false;"><i class="fas fa-check-square"></i><span class="d-none d-sm-block"> Finalizar</span></button>
+          <button type="button" class="btn btn-outline-primary fw-bold" <?php echo !$isAuthorized ? 'disabled' : ''; ?> onclick="FnEditarInforme(); return false;"><i class="fas fa-edit"></i><span class="d-none d-sm-block"> Editar</span></button>
+          <button type="button" class="btn btn-outline-primary fw-bold" <?php echo !$isAuthorized ? 'disabled' : ''; ?> onclick="FnModalFinalizarInforme(); return false;"><i class="fas fa-check-square"></i><span class="d-none d-sm-block"> Finalizar</span></button>
         </div>
       </div>
 
       <!-- NOMBRE DE CLIENTE E INFORME -->
       <div class="row border-bottom mb-2 fs-5">
         <div class="col-12 fw-bold d-flex justify-content-between">
-          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe->clinombre : $Estado=3 ? $informe->clinombre : 'No autorizado'; ?></p>
+          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $ClienteNombre : ''; ?></p>
           <input type="text" class="d-none" id="idInforme" value="<?php echo $Id; ?>">
-          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $informe->nombre : $Estado=3 ? $informe->nombre : 'No autorizado' ; ?></p>
+          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $Nombre :'' ; ?></p>
         </div>
       </div>
 
@@ -284,7 +285,7 @@
             </div>
             <div class="col-6 col-sm-4 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Lugar</p> 
-              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->ubicacion  ; ?></p>
+              <p class="m-0 p-0 text-secondary text-uppercase fw-bold"><?php echo  $informe->clidireccion  ; ?></p>
             </div>
             <div class="col-6 col-sm-8 col-lg-4 mb-1">
               <p class="m-0 text-secondary fw-light" style="font-size: 15px;">Supervisor</p> 
@@ -471,7 +472,7 @@
 
     </div><!-- CIERRE CONTAINER -->
   </body>
-  <script src="js/vistaPreliminar.js"></script>
+  <script src="js/informe.js"></script>
     <script src="/mycloud/library/bootstrap-5.1.0-dist/js/bootstrap.min.js"></script>
     <script src="/mycloud/library/SweetAlert2/js/sweetalert2.all.min.js"></script>
     <?php if ($errorMessage): ?>
@@ -481,7 +482,7 @@
             icon: 'error',
             title: 'Error',
             text: '<?php echo addslashes($errorMessage); ?>',
-            // timer: 2000
+            timer: 1000,
           });
         });
       </script>

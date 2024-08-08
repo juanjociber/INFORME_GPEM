@@ -4,14 +4,14 @@
 // });
 
 function FnListarInformes(){
-  window.location.href='/informes/buscarInforme.php';
+  window.location.href='/informes/informes.php';
   return false;
 }
 
 function FnEditarInforme(){
   let informe = document.getElementById('idInforme').value;
   if(informe > 0){
-      window.location.href='/informes/datoGeneral.php?id='+informe;
+      window.location.href='/informes/editarInforme.php?id='+informe;
   }
   return false;
 }

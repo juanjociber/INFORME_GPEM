@@ -25,19 +25,15 @@ try {
         throw new Exception("La información está incompleta.");
     }
 
-        
     $USUARIO = date('Ymd-His (').'jhuiza'.')';
 
     $informe = new stdClass();
     $informe->id = $_POST['id'];
     $informe->fecha = $_POST['fecha'];
     $informe->clicontacto = $_POST['clicontacto'];
-    $informe->ubicacion = empty($_POST['ubicacion']) ? NULL : $_POST['ubicacion'] ;
+    $informe->clidireccion = $_POST['clidireccion'] ;
     $informe->supervisor = $_POST['supervisor'];
     $informe->actualizacion = $USUARIO;
-
-    // LOG DATOS RECIBIDOS
-    //error_log("Datos recibidos: " . json_encode($informe));
 
     if (FnModificarInformeDatosGenerales($conmy, $informe)) {
         $data['msg'] = "Se modificó los datos generales.";
@@ -53,8 +49,13 @@ try {
     error_log("Exception: " . $data['msg']);
 } finally {
     $conmy = null;
+    // Asegurarse de que la respuesta sea siempre JSON
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $data['res'] = false;
+        $data['msg'] = 'Error generando JSON.';
+    }
 }
 
-//ob_end_clean();
+// Envía la respuesta JSON
 echo json_encode($data);
 ?>

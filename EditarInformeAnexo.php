@@ -7,6 +7,8 @@
   $isAuthorized = false;
   $errorMessage = '';
   $Estado=0;
+  $Nombre='';
+  $ClienteNombre="";
 
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -15,6 +17,8 @@
       $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
       if ($informe && $informe->estado !=3) {
         $isAuthorized = true;
+        $Nombre = $informe->nombre;
+        $ClienteNombre = $informe->clinombre;
         $archivos = FnBuscarArchivos($conmy, $Id);
       } 
     } else {
@@ -27,6 +31,7 @@
   } finally {
       $conmy = null;
   }
+
 ?>
 
 <!doctype html>
@@ -46,20 +51,23 @@
       <!-- CABECERA -->
       <div class="row border-bottom mb-3 fs-5">
         <div class="col-12 fw-bold d-flex justify-content-between">
-          <p class="m-0 p-0 text-secondary"><?php echo ($isAuthorized || $Estado = 3) ? $informe->clinombre : 'No Autorizado'; ?></p>
-            <input type="text" class="d-none" id="txtIdInforme" value="<?php echo $informe->id; ?>" readonly/>
-          <p class="m-0 p-0 text-center text-secondary"><?php echo ($isAuthorized || $Estado = 3) ? $informe->nombre : 'No Autorizado'; ?></p>
+          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $ClienteNombre : ''; ?></p>
+          <input type="text" class="d-none" id="txtIdInforme" value="<?php echo $Id; ?>" readonly/>
+          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $Nombre : ''; ?></p>
         </div>
       </div>
+
+
+      
       <!-- ENLACES -->
       <div class="row">
         <div class="col-12">
             <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='currentColor'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
                 <ol class="breadcrumb">                        
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/datoGeneral.php?id=<?php echo ($Id) ?>" class="text-decoration-none">INFORME</a></li>
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/datoEquipo.php?id=<?php echo ($Id) ?>" class="text-decoration-none">EQUIPO</a></li>
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/resumen.php?id=<?php echo ($Id) ?>" class="text-decoration-none">RESUMEN</a></li>
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/actividad.php?id=<?php echo ($Id) ?>" class="text-decoration-none">ACTIVIDAD</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInforme.php?id=<?php echo ($Id) ?>" class="text-decoration-none">INFORME</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInformeEquipo.php?id=<?php echo ($Id) ?>" class="text-decoration-none">EQUIPO</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInformeResumen.php?id=<?php echo ($Id) ?>" class="text-decoration-none">RESUMEN</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInformeActividad.php?id=<?php echo ($Id) ?>" class="text-decoration-none">ACTIVIDAD</a></li>
                     <li class="breadcrumb-item active fw-bold" aria-current="page">ANEXOS</li>
                 </ol>
             </nav>
@@ -133,7 +141,7 @@
       </div> 
     </div>
 
-    <script src="js/anexo.js"></script>
+    <script src="js/editarInformeAnexo.js"></script>
     <script src="/mycloud/library/SweetAlert2/js/sweetalert2.all.min.js"></script>
     <script src="/mycloud/library/bootstrap-5.1.0-dist/js/bootstrap.bundle.min.js"></script>
     <?php if ($errorMessage): ?>

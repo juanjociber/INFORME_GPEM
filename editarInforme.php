@@ -6,8 +6,10 @@
   $Cliid = 2;
   $isAuthorized = false;
   $errorMessage = '';
-
   $Estado=0;
+  $Nombre='';
+  $ClienteNombre="";
+  $supervisores =[];
 
   try {
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -16,6 +18,8 @@
       $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
       if($informe && $informe->estado !=3){
         $isAuthorized = true;
+        $Nombre = $informe->nombre;
+        $ClienteNombre = $informe->clinombre;
         $supervisores = FnBuscarSupervisores($conmy,$Cliid);
       }
     }else{
@@ -45,7 +49,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Datos Generales | GPEM SAC</title>
+    <title>Editar Informe | GPEM SAC</title>
     <link rel="shortcut icon" href="/mycloud/logos/favicon.ico">
     <link rel="stylesheet" href="/mycloud/library/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/mycloud/library/SweetAlert2/css/sweetalert2.min.css">
@@ -60,9 +64,9 @@
       <!-- CABECERA -->
       <div class="row border-bottom mb-3 fs-5">
         <div class="col-12 fw-bold d-flex justify-content-between">
-          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $informe->clinombre : $Estado=3 ? $informe->clinombre : 'No Autorizado'; ?></p>
-          <input type="text" class="d-none" id="idInforme" value="<?php echo $isAuthorized ? $informe->id : $Estado=3 ? $informe->id : ''; ?>" readonly/>
-          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $informe->nombre : $Estado=3 ? $informe->nombre : 'No Autorizado'; ?></p>
+          <p class="m-0 p-0 text-secondary"><?php echo $isAuthorized ? $ClienteNombre : ''; ?></p>
+          <input type="text" class="d-none" id="idInforme" value="<?php echo $Id; ?>" readonly/>
+          <p class="m-0 p-0 text-center text-secondary"><?php echo $isAuthorized ? $Nombre : ''; ?></p>
         </div>
       </div>
       <!-- ENLACES -->
@@ -71,10 +75,10 @@
             <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='currentColor'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
                 <ol class="breadcrumb">                        
                     <li class="breadcrumb-item active fw-bold" aria-current="page">INFORME</li>
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/datoEquipo.php?id=<?php echo ($Id);?>" class="text-decoration-none">EQUIPO</a></li>
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/resumen.php?id=<?php echo ($Id);?>" class="text-decoration-none">RESUMEN</a></li>
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/actividad.php?id=<?php echo ($Id);?>" class="text-decoration-none">ACTIVIDAD</a></li>
-                    <li class="breadcrumb-item fw-bold"><a href="/informes/anexos.php?id=<?php echo ($Id);?>" class="text-decoration-none">ANEXOS</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInformeEquipo.php?id=<?php echo ($Id);?>" class="text-decoration-none">EQUIPO</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInformeResumen.php?id=<?php echo ($Id);?>" class="text-decoration-none">RESUMEN</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInformeActividad.php?id=<?php echo ($Id);?>" class="text-decoration-none">ACTIVIDAD</a></li>
+                    <li class="breadcrumb-item fw-bold"><a href="/informes/editarInformeAnexo.php?id=<?php echo ($Id);?>" class="text-decoration-none">ANEXOS</a></li>
                 </ol>
             </nav>
         </div>
@@ -106,7 +110,7 @@
           <div class="custom-select-container col-md-6 col-lg-4">
             <label for="contactoInput" class="form-label mb-0">Contacto</label>
             <div class="custom-select-wrapper">
-              <input type="text" id="contactoInput" class="custom-select-input text-secondary text-uppercase fw-bold" value="<?php echo ($informe->clicontacto); ?>" placeholder="Seleccionar contacto" />
+              <input type="text" id="contactoInput" class="custom-select-input text-secondary text-uppercase fw-bold" value="<?php echo ($informe->clicontacto); ?>" />
               <span class="custom-select-arrow text-secondary text-uppercase fw-bold"><i class="bi bi-chevron-down"></i></span>
               <div id="contactoList" class="custom-select-list ">
                 <?php foreach ($supervisores as $supervisor): ?>
@@ -120,13 +124,13 @@
           <!-- LUGAR -->
           <div class="col-md-6 col-lg-4">
             <label for="ubicacionInput" class="form-label mb-0">Lugar</label>
-            <input type="text" class="form-control text-secondary text-uppercase fw-bold" id="ubicacionInput" value="<?php echo ($informe->ubicacion); ?>" placeholder="Ingresar lugar">
+            <input type="text" class="form-control text-secondary text-uppercase fw-bold" id="ubicacionInput" value="<?php echo ($informe->clidireccion); ?>" >
           </div>      
           <!-- SUPERVISORES -->
           <div class="custom-select-container col-md-6 col-lg-4">
             <label for="supervisorInput" class="form-label mb-0">Supervisor</label>
             <div class="custom-select-wrapper">
-              <input type="text" class="custom-select-input text-secondary text-uppercase fw-bold" id="supervisorInput" value="<?php echo  ($supervisorInputValue);?>" placeholder="Seleccionar supervisor" />
+              <input type="text" class="custom-select-input text-secondary text-uppercase fw-bold" id="supervisorInput" value="<?php echo  ($supervisorInputValue);?>"/>
               <span class="custom-select-arrow"><i class="bi bi-chevron-down"></i></span>
               <div id="supervisorList" class="custom-select-list">
                 <!-- SUPERVISORES -->
@@ -149,7 +153,7 @@
       <?php endif ?>
     </div><!-- END CONTAINER -->
 
-    <script src="js/datoGeneral.js"></script>
+    <script src="js/editarInforme.js"></script>
     <script src="/mycloud/library/bootstrap-5.1.0-dist/js/bootstrap.min.js"></script>
     <script src="/mycloud/library/SweetAlert2/js/sweetalert2.all.min.js"></script>
     <?php if ($errorMessage): ?>

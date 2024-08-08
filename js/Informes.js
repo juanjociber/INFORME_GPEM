@@ -1,204 +1,171 @@
-var vgEquipo = 0;
-var vgOrden = '';
-var vgFechaInicial = '';
-var vgFechaFinal = '';
-var vgPagina = 0;
-var NextPage = false;
-const vgLoader = document.querySelector('.container-loader-full');
+// FUNCIÓN PARA BUSCAR EQUIPOS
+const buscarEquipos = async (idInput, idLista, idSpinner) => {
+  const inputSelect = document.getElementById(idInput);
+  const listaSelect = document.getElementById(idLista);
+  const spinner = document.getElementById(idSpinner);
 
-window.onload = function() {
-    document.getElementById('MenuOrdenes').classList.add('menu-activo','fw-bold');
-    vgLoader.classList.add('loader-full-hidden');
+  if (!inputSelect || !listaSelect || !spinner) { return; }
+
+  inputSelect.addEventListener('click', function() {
+    listaSelect.style.display = listaSelect.style.display === 'block' ? 'none' : 'block';
+  });
+  document.addEventListener('click', function(event) {
+    if (!event.target.closest('.custom-select-wrapper')) {
+      listaSelect.style.display = 'none';
+      listaSelect.innerHTML = ''; 
+    }
+  });
+  const fetchEquipos = async () => {
+    const nombre = inputSelect.value.trim(); 
+    if (nombre.length < 1) { 
+      listaSelect.style.display = 'none'; 
+      return; 
+    }
+    spinner.style.display = 'flex';
+    const formData = new FormData();
+    formData.append('nombre', nombre);
+
+    try {
+      const response = await fetch('http://localhost/informes/search/BuscarEquipos.php', {
+          method: 'POST',
+          body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.res) {
+        const equipos = result.data;
+        listaSelect.innerHTML = '';
+
+        equipos.forEach(equipo => {
+            const item = document.createElement('div');
+            item.className = 'custom-select-item';
+            item.textContent = equipo.activo;
+            item.dataset.idactivo = equipo.idactivo;  
+            item.onclick = () => {
+                inputSelect.value = equipo.activo;
+                document.getElementById('idActivoInput').value = equipo.idactivo;  
+                listaSelect.style.display = 'none';
+                listaSelect.innerHTML = ''; 
+            };
+            listaSelect.appendChild(item);
+        });
+
+        listaSelect.style.display = 'block';
+      } else {
+          listaSelect.innerHTML = `<div class="custom-select-item">Error: ${result.msg}</div>`;
+          listaSelect.style.display = 'block';
+      }
+    } catch (error) {
+        listaSelect.innerHTML = `<div class="custom-select-item">Error: ${error.message}</div>`;
+        listaSelect.style.display = 'block';
+    } finally {
+        spinner.style.display = 'none';
+    }
+  };
+  // TEMPORIZADOR
+  const debounce = (func, delay) => {
+      let debounceTimer;
+      return function() {
+          const context = this;
+          const args = arguments;
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => func.apply(context, args), delay);
+      }
+  };
+  inputSelect.addEventListener('input', debounce(fetchEquipos, 1000));
 };
 
-$(document).ready(function() {
-    $('#cbActivo1').select2({
-        width: 'resolve', //Personalizar el alto del select, aplicar estilo.
-        ajax: {
-            delay: 450, //Tiempo de demora para buscar
-            url: '/gesman/search/ListarActivos.php',
-            type: 'POST',
-            dataType: 'json',
-            data: function (params) {
-                return {
-                    nombre: params.term // parametros a enviar al server. params.term captura lo que se escribe en el input
-                };
-            },
-            processResults: function (data) {
-                return {
-                    results: data.data //Retornar el json obtenido
-                }
-            },
-            cache: true
-        },
-        placeholder: 'Seleccionar',
-        allowClear: true, // Permite borrar la selección
-        minimumInputLength:1 //Caracteres minimos para buscar
-    });
+document.addEventListener('DOMContentLoaded', function() {
+  buscarEquipos('equipoInput', 'equipoList', 'spinner');
 });
 
+// FUNCIÓN PARA BUSCAR INFORME
+const fnBuscarInforme = async () => {
+  const nombre = document.querySelector('#informeInput').value;
+  const equid = document.querySelector('#idActivoInput').value;
+  const fechainicial = document.querySelector('#fechaInicialInput').value;
+  const fechafinal = document.querySelector('#fechaFinalInput').value;
 
-$(document).ready(function() {
-    $('#cbActivo2').select2({
-        dropdownParent: $('#modalAgregarOrden'),//Agregar el select a un modal
-        width: 'resolve', //Personalizar el alto del select, aplicar estilo.
-        ajax: {
-            delay: 450, //Tiempo de demora para buscar
-            url: '/gesman/search/ListarActivos.php',
-            type: 'POST',
-            dataType: 'json',
-            data: function (params) {
-                return {
-                    nombre: params.term // parametros a enviar al server. params.term captura lo que se escribe en el input
-                };
-            },
-            processResults: function (data) {
-                return {
-                    results: data.data //Retornar el json obtenido
-                }
-            },
-            cache: true
-        },
-        placeholder: 'Seleccionar',
-        minimumInputLength:1 //Caracteres minimos para buscar
-    });/*.on('select2:select', function (e) {
-        nuevaOrden.idactivo=e.params.data.id;
-        nuevaOrden.activo=e.params.data.text;
-        console.log(nuevaOrden);
-    });*/
-});
-
-function FnModalAgregarOrden(){
-    const modalAgregarOrden=new bootstrap.Modal(document.getElementById('modalAgregarOrden'), {
-        keyboard: false
-    }).show();
-    return false;
-}
-
-async function FnAgregarOrden(){
-    vgLoader.classList.remove('loader-full-hidden');
-    try {        
-        const formData = new FormData();
-        formData.append('fecha', document.getElementById('txtFecha2').value);
-        formData.append('orden', document.getElementById('txtOrden2').value);
-        formData.append('idactivo', document.getElementById('cbActivo2').value);
-        formData.append('activo', document.getElementById("cbActivo2").options[document.getElementById("cbActivo2").selectedIndex].text);
-        formData.append('km', document.getElementById('txtKm2').value);
-        formData.append('idtipo', document.getElementById('cbTipo2').value);
-        formData.append('tipo', document.getElementById("cbTipo2").options[document.getElementById("cbTipo2").selectedIndex].text);        
-        formData.append('idsistema', document.getElementById('cbSistema2').value);
-        formData.append('sistema', document.getElementById("cbSistema2").options[document.getElementById("cbSistema2").selectedIndex].text);
-        formData.append('actividad', document.getElementById('txtActividad2').value);
-        const response = await fetch("/gesman/insert/AgregarOrden.php", {
-            method: "POST",
-            body: formData
-        });/*.then(response=>response.text()).then((response)=>{console.log(response)}).catch(err=>console.log(err))*/        
-        if(!response.ok){throw new Error(`${response.status} ${response.statusText}`)}
-        const datos = await response.json();
-        if(!datos.res){throw new Error(datos.msg);}
-        setTimeout(()=>{window.location.href='/gesman/EditarOrden.php?orden='+datos.id;},1000);
-    } catch (error) {
-        document.getElementById('msjAgregarOrden').innerHTML=`<div class="alert alert-danger mb-2 p-1 text-center" role="alert">${error}</div>`;
-        setTimeout(()=>{vgLoader.classList.add('loader-full-hidden');},500);
-    }
-}
-
-function FnBuscarInformes(){
-    vgOrden = document.getElementById('txtNombre').value;
-    vgEquipo = document.getElementById('cbEquipo').value;
-    vgFechaInicial = document.getElementById('dtpFechaInicial').value;
-    vgFechaFinal = document.getElementById('dtpFechaFinal').value;
-    vgPagina = 0;
-    document.getElementById('tblInformes').innerHTML = '';
-    FnBuscarInformes2();
-    return false;
-}
-
-async function FnBuscarInformes2(){
-    vgLoader.classList.remove('loader-full-hidden');
-    NextPage = false;
-    try {
-        const formData = new FormData();
-        formData.append('nombre', vgOrden);
-        formData.append('equid', vgEquipo);
-        formData.append('fechainicial', vgFechaInicial);
-        formData.append('fechafinal', vgFechaFinal);
-        formData.append('pagina', vgPagina);
-
-        console.log(vgFechaInicial, vgFechaFinal)
-
-        const response = await fetch('/informes/search/BuscarInformes.php', {
-            method:'POST',
-            body: formData
-        });/*.then(response=>response.text()).then((response)=>{console.log(response)}).catch(err=>console.log(err));*/
-
-        if(response.ok){
-            const datos = await response.json();
-            console.log(datos);
-            if(datos.res){
-                let estado = '';
-                datos.data.forEach(informe => {
-                    switch (informe.estado){
-                        case 1:
-                            estado='<span class="badge bg-danger">Anulado</span>';
-                        break;
-                        case 2:
-                            estado='<span class="badge bg-primary">Proceso</span>';
-                        break;
-                        case 3:
-                            estado='<span class="badge bg-success">Cerrado</span>';
-                        break;
-                        default:
-                            estado='<span class="badge bg-light text-dark">Unknown</span>';
-                    }
-
-                    document.getElementById('tblInformes').innerHTML +=`
-                    <div class="col-12 divselect border-bottom border-secondary mb-1 p-1">
-                        <a class="link-colecciones" href="#" onclick="FnResumenInforme(${informe.id}); return false;">
-                            <div class="row">
-                                <div class="col-8"><span class="fw-bold">${informe.nombre}</span> <span style="font-size: 12px; font-style: italic;">${informe.fecha}</span></div>
-                                <div class="col-4 text-end">${estado}</div>
-                                <div class="col-12">${informe.actividad}</div>
-                            </div>
-                        </a>
-                    </div>`;
-                });
-
-                vgPagina += datos.pag;
-                console.log(datos.pag);
-                if (datos.pag == 20) {
-                    NextPage = true;
-                    document.getElementById("divPaginacion").classList.remove("d-none");
-                }
-            }else{
-                throw new Error(datos.msg);
-            }
-        }else{
-            throw new Error(`${response.status} ${response.statusText}`);
-        }
-    } catch (error) {
-        alert(error);
-    }
-
-    await new Promise((resolve, reject) => {
-        setTimeout(function () {
-            vgLoader.classList.add('loader-full-hidden');
-        }, 500)
+  if (!fechainicial || !fechafinal) {
+    Swal.fire({
+      text  : "Las fechas de busqueda están incompletas.",
+      title : "Información!",
+      icon  : "info",
+      timer : 2000
     });
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('nombre', nombre);
+  formData.append('equid', equid);
+  formData.append('fechainicial', fechainicial);
+  formData.append('fechafinal', fechafinal);
+
+  try {
+    const response = await fetch('http://localhost/informes/search/BuscarInformes.php', {
+      method: 'POST',
+      body: formData
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    //console.log(data);
+    if (data.res) {
+      mostrarInformes(data.data);
+    } else {
+      Swal.fire({
+        title: "Información de servidor",
+        text: data.msg,
+        icon: "error"
+      });
+    }
+  } catch (error) {
+    Swal.fire({
+      title: "Información de servidor",
+      text: error.message,
+      icon: "error"
+    });
+  }
 }
 
-function fnNuevaPagina() {
-    if (NextPage) {
-        FnBuscarOrdenes2();
-    }else{
-        document.getElementById("divPaginacion").classList.add("d-none");
-    }
-    return false;
+// FUNCIÓN MOSTRAR INFORMES
+async function mostrarInformes(informes) {
+  const resultadoDiv = document.querySelector('#contenedor-lista');
+  await informes.forEach(({ nombre = '', fecha = '', estado = 0, id = 0, equcodigo = 0, actividad = '' }) => {
+    resultadoDiv.innerHTML += `
+      <a href="http://localhost/informes/informe.php?id=${id}" style="text-decoration:none; color:#797979">
+        <div class="row mb-3 border-bottom">
+          <div class="col-8">
+            <span class="fw-bold">${nombre}</span>
+            <span style="font-size: 12px; font-style: italic;">${fecha}</span>
+          </div>
+          <div class="col-4 text-end">
+            <span class="p-2 badge ${estado == 1 ? 'bg-secondary': estado == 2 ? 'bg-primary' : estado == 3 ? 'bg-success' : 'bg-danger'}">
+              ${ estado== 1 ? 'Anulado': estado == 2 ? 'Abierto' : estado == 3 ? 'Cerrado' : estado}
+            </span>
+          </div>
+          <div class="col-12">${equcodigo} <span> - </span> ${actividad}</div>
+        </div>
+      </a>
+    `;
+  });
 }
 
-function FnResumenOrden(orden){
-    if(orden > 0){
-        window.location.href='/gesman/ResumenOrden.php?orden='+orden;
-    }
-    return false;
+// CARGANDO FECHA ACTUAL
+const cargaFechaActual = () =>{
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');const day = String(today.getDate()).padStart(2, '0');
+
+  const formattedDate = `${year}-${month}-${day}`;
+  document.getElementById('fechaInicialInput').value = formattedDate;
+  document.getElementById('fechaFinalInput').value = formattedDate;
 }
+cargaFechaActual();
