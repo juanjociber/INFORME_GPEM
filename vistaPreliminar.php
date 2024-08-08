@@ -10,7 +10,7 @@
 
   $NUMERO=1;
   $Nombre='';
-	$Estado=0;
+	$Estado= $informe->estado;
 
 	$tablaHTML ='';
 
@@ -21,7 +21,15 @@
 				$hijos = construirArbol($registros, $registro['id']);
 				if (!empty($hijos)) {
 					$registro['hijos'] = $hijos;
-				}					
+				}
+        //DANDOLE ESTILOS uppercase CUANDO EL NODO RAIZ ES HIJO
+        if ($padreId != 0) {
+          $registro['actividad'] = strtoupper($registro['actividad']);
+          $registro['diagnostico'] = strtoupper($registro['diagnostico']);
+          $registro['trabajos'] = strtoupper($registro['trabajos']);
+          $registro['observaciones'] = strtoupper($registro['observaciones']);
+        }
+        					
 				$arbol[] = $registro;
 			}
 		}			
@@ -140,7 +148,7 @@
           } else if ($dato['tipo'] == 'ant') {
             $antecedentes[] = array('actividad' => $dato['actividad']);
           }    
-        }
+        };
 
         $imagenInformes = array();
         $imagenAnexos = array();
@@ -158,7 +166,7 @@
               'descripcion' => $archivo['descripcion'],
             );
           }
-        }
+        };
         $arbol = construirArbol($actividades);
         $ids = array_map(function($elemento) {
           return $elemento['id'];
@@ -193,7 +201,7 @@
 
   $claseHabilitado = "btn-outline-secondary";
   $atributoHabilitado = " disabled";
-  if($Estado == 1 || $Estado == 2 || $Estado == 4){
+  if($Estado == 1 || $Estado == 2){
       $claseHabilitado = "btn-outline-primary";
       $atributoHabilitado = "";
   }
@@ -429,18 +437,16 @@
           <div class="col-12 mb-0">
             <p class="mt-2 mb-2 text-secondary fw-bold">ESTADO</p>
           </div>
-          <div class="p-1 mb-2">
-            <?php
-              $Estado = 1; 
-              $EstadoClass = ($Estado == 1) ? 'bg-primary' : ($Estado == 2 ? 'bg-success' : 'bg-danger');
-              $EstadoText = ($Estado == 1) ? 'Abierto' : ($Estado == 2 ? 'Cerrado' : 'Anulado');
+          <div class="col-12 p-1 mb-2">
+            <?php 
+              $estadoClass = $informe->estado == 1 ? 'bg-secondary' : ($informe->estado == 2 ? 'bg-primary' : ($informe->estado == 3 ? 'bg-success' : 'bg-light'));
+              $estadoText = $informe->estado == 1 ? 'Anulado' : ($informe->estado == 2 ? 'Abierto' : ($informe->estado == 3 ? 'Cerrado' : 'Desconocido'));
             ?>
-            <div class="col-2">
-              <p class="text-white text-center rounded rounded-1 pt-1 pb-1 <?php echo $EstadoClass; ?>"><?php echo ($EstadoText); ?></p>
-            </div>            
+            <span class="p-2 text-white <?php echo $estadoClass; ?>"  Style="border-radius:4px">
+              <?php echo $estadoText; ?>
+            </span>
           </div>
         </div>
-
         <div class="modal fade" id="modalFinalizarInforme" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">

@@ -140,15 +140,15 @@ async function mostrarInformes(informes) {
   const resultadoDiv = document.querySelector('#contenedor-lista');
   await informes.forEach(({ nombre = '', fecha = '', estado = 0, id = 0, equcodigo = 0, actividad = '' }) => {
     resultadoDiv.innerHTML += `
-      <a href="http://localhost/informes/vistaPreliminar.php?informe=${id}" style="text-decoration:none; color:#797979">
+      <a href="http://localhost/informes/vistaPreliminar.php?id=${id}" style="text-decoration:none; color:#797979">
         <div class="row mb-3 border-bottom">
           <div class="col-8">
             <span class="fw-bold">${nombre}</span>
             <span style="font-size: 12px; font-style: italic;">${fecha}</span>
           </div>
           <div class="col-4 text-end">
-            <span class="p-2 badge ${estado == 1 ? 'bg-primary' : estado == 2 ? 'bg-success' : 'bg-danger'}">
-              ${estado == 1 ? 'Abierto' : estado == 2 ? 'Cerrado' : estado}
+            <span class="p-2 badge ${estado == 1 ? 'bg-secondary': estado == 2 ? 'bg-primary' : estado == 3 ? 'bg-success' : 'bg-danger'}">
+              ${ estado== 1 ? 'Anulado': estado == 2 ? 'Abierto' : estado == 3 ? 'Cerrado' : estado}
             </span>
           </div>
           <div class="col-12">${equcodigo} <span> - </span> ${actividad}</div>

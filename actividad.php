@@ -18,7 +18,7 @@
 				$hijos = construirArbol($registros, $registro['id']);
 				if (!empty($hijos)) {
 					$registro['hijos'] = $hijos;
-				}					
+				}
 				$arbol[] = $registro;
 			}
 		}			
@@ -32,11 +32,11 @@
 		foreach ($arbol as $key=>$nodo) {
  
 			$indiceActual = $nivel==0?$contador++:$indice.'.'.($key+1);
-			$html.='<div class="accordion-item" id="'.$nodo['id'].'">';
+			$html.='<div class="accordion-item text-uppercase " id="'.$nodo['id'].'">';
 			$html.='
-				<h2 class="accordion-header" id="accordion-header-'.$nodo['id'].'">
-          <div class="cabecera">
-            <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-accordion-'.$nodo['id'].'" aria-expanded="true" aria-controls="collapse-accordion-'.$contador.'">
+				<h2 class="accordion-header text-uppercase" id="accordion-header-'.$nodo['id'].'">
+          <div class="cabecera text-uppercase ">
+            <button class="accordion-button text-uppercase fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-accordion-'.$nodo['id'].'" aria-expanded="true" aria-controls="collapse-accordion-'.$contador.'">
 						'.$indiceActual.' - '.$nodo['actividad'].'
             </button>
             <div class="accordion-botones">
@@ -47,8 +47,8 @@
             </div>
           </div>
 				</h2>
-				<div id="collapse-accordion-'.$nodo['id'].'" class="accordion-collapse collapse show" aria-labelledby="accordion-header-'.$nodo['id'].'">
-					<div class="accordion-body">
+				<div id="collapse-accordion-'.$nodo['id'].'" class="accordion-collapse text-uppercase collapse show" aria-labelledby="accordion-header-'.$nodo['id'].'">
+					<div class="accordion-body text-uppercase">
 						<div class="row">
 							<div class="col-6">
                 <label class="form-label mb-0">Diagnóstico</label>
@@ -63,11 +63,11 @@
                 <p class="mb-1 text-secondary text-uppercase fw-bold" style="font-size=15px" id="observacion-'.$nodo['id'].'">'.$nodo['observaciones'].'</p>
               </div>
 						</div>
-						<div class="row m-0 mt-2 mb-2 p-0 d-flex justify-content-evenly" id="'.$nodo['id'].'">';
+						<div class="row m-0 mt-2 mb-2 p-0 d-flex justify-content-evenly text-uppercase" id="'.$nodo['id'].'">';
 							if(isset($imagenes[$nodo['id']])){
 								foreach($imagenes[$nodo['id']] as $elemento){
 									$html.='
-                    <div class="col-5 col-lg-4 col-xl-3 border border-secondary border-opacity-50 position-relative" id="archivo-'.$elemento['id'].'">
+                    <div class="col-5 col-lg-4 col-xl-3 text-uppercase border border-secondary border-opacity-50 position-relative" id="archivo-'.$elemento['id'].'">
                       <p class="text-center mt-4 mb-1 text-secondary text-uppercase fw-bold">'.$elemento['titulo'].'</p>
                         <i class="bi bi-x-lg" style="position: absolute; font-size: 23px;color: tomato;top: 40px;left: 5px; top:5px" onclick="fnEliminarImagen('.$elemento['id'].')"></i>
                         <img src="/mycloud/files/'.$elemento['nombre'].'" class="img-fluid" alt="">
@@ -77,7 +77,7 @@
 							}
 						$html.='</div>';
 			if (!empty($nodo['hijos'])) {
-				$html.='<div class="accordion" id="accordion-container-'.$nodo['id'].'">';
+				$html.='<div class="accordion text-uppercase" id="accordion-container-'.$nodo['id'].'">';
 				$html.=FnGenerarInformeHtmlAcordeon($nodo['hijos'], $imagenes, $nivel+1, $indiceActual );
 				$html.='</div>';
 			}
