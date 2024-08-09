@@ -11,6 +11,8 @@
   $NUMERO=1;
   $Nombre='';
   $ClienteNombre='';
+  $imagenInformes = array();
+  $imagenAnexos = array();
 	$tablaHTML ='';
 
 	function construirArbol($registros, $padreId = 0) {
@@ -118,7 +120,7 @@
     $conmy->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     $informe = FnBuscarInformeMatriz($conmy, $Id, $Cliid);
-    if (!empty($informe) && $informe->estado != 3) {
+    if (!empty($informe->id)) {
       $isAuthorized = true;
       $Nombre = $informe->nombre;
       $ClienteNombre = $informe->clinombre;
@@ -151,8 +153,6 @@
           }    
         };
 
-        $imagenInformes = array();
-        $imagenAnexos = array();
         foreach ($archivos as $archivo) {
           if ($archivo['tabla'] == "INF") {
             $imagenInformes[] = array(
